@@ -151,6 +151,39 @@ namespace Servers.HTTP
             }
         }
 
+        public void StartV6(bool bV6Only = false)
+        {
+            if (IsRunning) return;
+
+            //创建服务端Socket
+            this.serverListener = new TcpListener(ServerIP, ServerPort);
+            if (!bV6Only)
+                this.serverListener.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
+            else
+                this.serverListener.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, true);
+            this.Protocol = serverCertificate == null ? Protocols.Http : Protocols.Https;
+            this.IsRunning = true;
+            this.serverListener.Start();
+            if (ServerIP.AddressFamily == AddressFamily.InterNetwork)
+                this.Log(string.Format("Sever is running at {0}://{1}:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
+            else
+                this.Log(string.Format("Sever is running at {0}://[{1}]:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
+
+            try
+            {
+                while (IsRunning)
+                {
+                    TcpClient client = serverListener.AcceptTcpClient();
+                    Thread requestThread = new Thread(() => { ProcessRequest(client); });
+                    requestThread.Start();
+                }
+            }
+            catch (Exception e)
+            {
+                Log(e.Message);
+            }
+        }
+
 
         public HttpServer SetSSL(string certificate)
         {

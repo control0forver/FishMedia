@@ -100,14 +100,7 @@ namespace FishMedia
     {
         public void Log(object message)
         {
-            Console.WriteLine("[WebServer] " + message);
-        }
-    }
-    public class ConsoleLogger6 : ILogger
-    {
-        public void Log(object message)
-        {
-            Console.WriteLine("[WebServer6] " + message);
+            Console.WriteLine("[WebServer Log] " + message);
         }
     }
 
@@ -238,6 +231,10 @@ namespace FishMedia
                     webServer6 = new WebServer(ipaddrIpV6, int.Parse(Port6), RootDir, Index);
                     webServer6.Logger = new ConsoleLogger6();
                     webServer6Thread.Start();
+                }
+                else
+                {
+
                 }
             }
 
