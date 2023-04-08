@@ -43,6 +43,7 @@ namespace FishMedia
             "      Index = index.htm # Also for: Index = \'index.htm\'\n" +
             "\n" +
             "      # Any > IpAddress\n" +
+            "      # IpV6 > IpV4\n" +
             "      IpV6 = true\n" +
             "      #IpAddr = 127.0.0.1\n" +
             "      IpAddr = Any\n" +

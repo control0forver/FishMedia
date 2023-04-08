@@ -110,13 +110,7 @@ namespace FishMedia
         static Thread webServerThread = new Thread(webServerThreadHandler) { IsBackground = true };
         static void webServerThreadHandler()
         {
-            webServer.Start();
-        }
-        static WebServer webServer6 = null;
-        static Thread webServer6Thread = new Thread(webServer6ThreadHandler) { IsBackground = true };
-        static void webServer6ThreadHandler()
-        {
-            webServer6.Start();
+            webServer.StartV6();
         }
 
         static string strConfigPath = "FishMedia.conf";
@@ -212,29 +206,27 @@ namespace FishMedia
                 nodeIndex = config.nodeConfigNodeTree;
                 ReadConfig();
 
-                IPAddress ipaddrIp = IPAddress.None;
-                if (IpAddr == "Any")
-                    ipaddrIp = IPAddress.Any;
-                else
-                    ipaddrIp = IPAddress.Parse(IpAddr);
-                webServer = new WebServer(ipaddrIp, int.Parse(Port), RootDir, Index);
-                webServer.Logger = new ConsoleLogger();
-                webServerThread.Start();
-
                 if (IpV6 == "true")
                 {
-                    IPAddress ipaddrIpV6 = IPAddress.None;
+                    IPAddress ipaddrIp = IPAddress.None;
                     if (IpAddr6 == "Any")
-                        ipaddrIpV6 = IPAddress.IPv6Any;
+                        ipaddrIp = IPAddress.IPv6Any;
                     else
-                        ipaddrIpV6 = IPAddress.Parse(IpAddr6);
-                    webServer6 = new WebServer(ipaddrIpV6, int.Parse(Port6), RootDir, Index);
-                    webServer6.Logger = new ConsoleLogger6();
-                    webServer6Thread.Start();
+                        ipaddrIp = IPAddress.Parse(IpAddr6);
+                    webServer = new WebServer(ipaddrIp, int.Parse(Port6), RootDir, Index);
+                    webServer.Logger = new ConsoleLogger();
+                    webServerThread.Start();
                 }
                 else
                 {
-
+                    IPAddress ipaddrIp = IPAddress.None;
+                    if (IpAddr == "Any")
+                        ipaddrIp = IPAddress.Any;
+                    else
+                        ipaddrIp = IPAddress.Parse(IpAddr);
+                    webServer = new WebServer(ipaddrIp, int.Parse(Port), RootDir, Index);
+                    webServer.Logger = new ConsoleLogger();
+                    webServerThread.Start();
                 }
             }
 
