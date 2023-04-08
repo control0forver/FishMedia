@@ -45,7 +45,7 @@ namespace FishMedia
             {
                 if (Directory.Exists(requestFile) && !File.Exists(requestFile + "\\" + strIndex))
                 {
-                    requestFile = Path.Combine(ServerRoot, requestFile);
+                    //requestFile = Path.Combine(ServerRoot, requestFile);
                     var content = ListDirectory(requestFile, requestURL);
                     response = response.SetContent(content, Encoding.UTF8);
                     response.Content_Type = "text/html; charset=UTF-8";
