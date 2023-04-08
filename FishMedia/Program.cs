@@ -1,4 +1,5 @@
 ﻿using Servers.HTTP;
+using System;
 using System.Net;
 using System.Text;
 
@@ -45,7 +46,7 @@ namespace FishMedia
             {
                 if (Directory.Exists(requestFile) && !File.Exists(requestFile + "\\" + strIndex))
                 {
-                    //requestFile = Path.Combine(ServerRoot, requestFile);
+                    requestFile = Path.Combine(ServerRoot, requestFile);
                     var content = ListDirectory(requestFile, requestURL);
                     response = response.SetContent(content, Encoding.UTF8);
                     response.Content_Type = "text/html; charset=UTF-8";
@@ -219,6 +220,7 @@ namespace FishMedia
                     else
                         ipaddrIp = IPAddress.Parse(IpAddr6);
                     webServer = new WebServer(ipaddrIp, int.Parse(Port6), RootDir, Index);
+                    webServer.SetRoot(RootDir);
                     webServer.Logger = new ConsoleLogger();
                     webServerThread.Start();
                 }
