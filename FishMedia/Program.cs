@@ -107,8 +107,12 @@ namespace FishMedia
     internal class Program
     {
         static WebServer webServer = null;
-        static Thread webServerThread = new Thread(webServerThreadHandler) { IsBackground = true };
+        static Thread webServerThread = null; 
         static void webServerThreadHandler()
+        {
+            webServer.Start();
+        }
+        static void webServerThreadHandlerV6()
         {
             webServer.StartV6();
         }
@@ -208,6 +212,7 @@ namespace FishMedia
 
                 if (IpV6 == "true")
                 {
+                    webServerThread = new Thread(webServerThreadHandlerV6) { IsBackground = true };
                     IPAddress ipaddrIp = IPAddress.None;
                     if (IpAddr6 == "Any")
                         ipaddrIp = IPAddress.IPv6Any;
@@ -219,6 +224,7 @@ namespace FishMedia
                 }
                 else
                 {
+                    webServerThread = new Thread(webServerThreadHandler) { IsBackground = true };
                     IPAddress ipaddrIp = IPAddress.None;
                     if (IpAddr == "Any")
                         ipaddrIp = IPAddress.Any;
