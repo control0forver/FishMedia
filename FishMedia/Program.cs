@@ -100,7 +100,7 @@ namespace FishMedia
     {
         public void Log(object message)
         {
-            Console.WriteLine("[WebServer] "+ message);
+            Console.WriteLine("[WebServer] " + message);
         }
     }
     public class ConsoleLogger6 : ILogger
@@ -148,7 +148,7 @@ namespace FishMedia
             Console.WriteLine("Starting Web Server");
             {
                 FishMediaConfigNode nodeIndex = config.nodeConfigNodeTree;
-                string RootDir = "", Index = "", IpAddr = "", Port = "", IpAddr6 = "", Port6 = "",IpV6 = "";
+                string RootDir = "", Index = "", IpAddr = "", Port = "", IpAddr6 = "", Port6 = "", IpV6 = "";
 
                 void ReadConfig()
                 {
@@ -220,7 +220,7 @@ namespace FishMedia
                 ReadConfig();
 
                 IPAddress ipaddrIp = IPAddress.None;
-                if (IpAddr=="Any")
+                if (IpAddr == "Any")
                     ipaddrIp = IPAddress.Any;
                 else
                     ipaddrIp = IPAddress.Parse(IpAddr);

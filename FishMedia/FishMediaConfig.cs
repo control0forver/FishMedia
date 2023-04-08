@@ -176,16 +176,16 @@ namespace FishMedia
                             FishMediaConfigNode NextNood = new FishMediaConfigNode();
                             ++iLineIndex;
                             MakeNode(ref NextNood);
-                            NextNoods[strNodeKey]=NextNood;
+                            NextNoods[strNodeKey] = NextNood;
                         }
                         else
                         {
                             string strNodeMemberKey = strConfigDataLine.Substring(0, strConfigDataLine.IndexOf('=')).Trim();
                             string strOriginNodeMemberValue = strConfigDataLine.Substring(strConfigDataLine.IndexOf('=') + 1).Trim();
-                            if ((strOriginNodeMemberValue.StartsWith('\'') && strOriginNodeMemberValue.EndsWith('\''))||(strOriginNodeMemberValue.StartsWith('\"') && strOriginNodeMemberValue.EndsWith('\"')))
+                            if ((strOriginNodeMemberValue.StartsWith('\'') && strOriginNodeMemberValue.EndsWith('\'')) || (strOriginNodeMemberValue.StartsWith('\"') && strOriginNodeMemberValue.EndsWith('\"')))
                             {
                                 strOriginNodeMemberValue = strOriginNodeMemberValue.Remove(0, 1);
-                                strOriginNodeMemberValue = strOriginNodeMemberValue.Remove(strOriginNodeMemberValue.Length-1, 1);
+                                strOriginNodeMemberValue = strOriginNodeMemberValue.Remove(strOriginNodeMemberValue.Length - 1, 1);
                             }
                             string strNodeMemberValue = strOriginNodeMemberValue;
 
