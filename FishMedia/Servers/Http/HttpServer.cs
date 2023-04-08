@@ -16,7 +16,7 @@ namespace Servers.HTTP
         /// <summary>
         /// 服务器IP
         /// </summary>
-        public string ServerIP { get; private set; }
+        public IPAddress ServerIP { get; private set; }
 
         /// <summary>
         /// 服务器端口
@@ -59,9 +59,9 @@ namespace Servers.HTTP
         /// <param name="ipAddress">IP地址</param>
         /// <param name="port">端口号</param>
         /// <param name="root">根目录</param>
-        private HttpServer(IPAddress ipAddress, int port, string root)
+        public HttpServer(IPAddress ipAddress, int port, string root)
         {
-            this.ServerIP = ipAddress.ToString();
+            this.ServerIP = ipAddress;
             this.ServerPort = port;
 
             //如果指定目录不存在则采用默认目录
@@ -127,11 +127,14 @@ namespace Servers.HTTP
             if (IsRunning) return;
 
             //创建服务端Socket
-            this.serverListener = new TcpListener(IPAddress.Parse(ServerIP), ServerPort);
+            this.serverListener = new TcpListener(ServerIP, ServerPort);
             this.Protocol = serverCertificate == null ? Protocols.Http : Protocols.Https;
             this.IsRunning = true;
             this.serverListener.Start();
-            this.Log(string.Format("Sever is running at {0}://{1}:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
+            if (ServerIP.AddressFamily == AddressFamily.InterNetwork)
+                this.Log(string.Format("Sever is running at {0}://{1}:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
+            else
+                this.Log(string.Format("Sever is running at {0}://[{1}]:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
 
             try
             {

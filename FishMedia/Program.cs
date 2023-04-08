@@ -1,4 +1,5 @@
 ﻿using Servers.HTTP;
+using System.Net;
 using System.Text;
 
 namespace FishMedia
@@ -7,8 +8,8 @@ namespace FishMedia
     {
         public string strIndex = "index.htm";
 
-        public WebServer(string strIpAddress, int iPort, string strRoot, string strIndex)
-            : base(strIpAddress, iPort, strRoot)
+        public WebServer(IPAddress ipaddrIp, int iPort, string strRoot, string strIndex)
+            : base(ipaddrIp, iPort, strRoot)
         {
             this.strIndex = strIndex;
         }
@@ -99,7 +100,14 @@ namespace FishMedia
     {
         public void Log(object message)
         {
-            Console.WriteLine(message);
+            Console.WriteLine("[WebServer] "+ message);
+        }
+    }
+    public class ConsoleLogger6 : ILogger
+    {
+        public void Log(object message)
+        {
+            Console.WriteLine("[WebServer6] " + message);
         }
     }
 
@@ -111,6 +119,14 @@ namespace FishMedia
         {
             webServer.Start();
         }
+        static WebServer webServer6 = null;
+        static Thread webServer6Thread = new Thread(webServer6ThreadHandler) { IsBackground = true };
+        static void webServer6ThreadHandler()
+        {
+            webServer6.Start();
+        }
+
+        static string strConfigPath = "FishMedia.conf";
 
         static int Main(string[] args)
         {
@@ -120,14 +136,19 @@ namespace FishMedia
             Console.ReadKey(true);
 
             FishMediaConfig config = new FishMediaConfig();
-            config.SetPath("FishMedia.conf");
+            config.SetPath(strConfigPath);
+            if (!File.Exists(strConfigPath))
+            {
+                Console.WriteLine("Config({0}) Not Found, use default.", strConfigPath);
+                config.SaveConfig();
+            }
             config.LoadConfig();
 
 
             Console.WriteLine("Starting Web Server");
             {
                 FishMediaConfigNode nodeIndex = config.nodeConfigNodeTree;
-                string RootDir, Index, IpAddr, Port, IpAddr6, Port6;
+                string RootDir = "", Index = "", IpAddr = "", Port = "", IpAddr6 = "", Port6 = "",IpV6 = "";
 
                 void ReadConfig()
                 {
@@ -178,6 +199,11 @@ namespace FishMedia
                                                 Port6 = item.Value;
                                                 break;
                                             }
+                                        case "IpV6":
+                                            {
+                                                IpV6 = item.Value;
+                                                break;
+                                            }
                                     }
                                 }
                             }
@@ -186,16 +212,33 @@ namespace FishMedia
                 }
 
                 // Read Default Config
-                nodeIndex = new FishMediaConfig(true).nodeConfigNodeTree;
-                ReadConfig();
+                //nodeIndex = new FishMediaConfig(true).nodeConfigNodeTree;
+                //ReadConfig();
 
                 // Read Current Config
                 nodeIndex = config.nodeConfigNodeTree;
                 ReadConfig();
 
-                webServer = new WebServer("127.0.0.1", 8080, "www", "index.htm");
+                IPAddress ipaddrIp = IPAddress.None;
+                if (IpAddr=="Any")
+                    ipaddrIp = IPAddress.Any;
+                else
+                    ipaddrIp = IPAddress.Parse(IpAddr);
+                webServer = new WebServer(ipaddrIp, int.Parse(Port), RootDir, Index);
                 webServer.Logger = new ConsoleLogger();
                 webServerThread.Start();
+
+                if (IpV6 == "true")
+                {
+                    IPAddress ipaddrIpV6 = IPAddress.None;
+                    if (IpAddr6 == "Any")
+                        ipaddrIpV6 = IPAddress.IPv6Any;
+                    else
+                        ipaddrIpV6 = IPAddress.Parse(IpAddr6);
+                    webServer6 = new WebServer(ipaddrIpV6, int.Parse(Port6), RootDir, Index);
+                    webServer6.Logger = new ConsoleLogger6();
+                    webServer6Thread.Start();
+                }
             }
 
             while (true)

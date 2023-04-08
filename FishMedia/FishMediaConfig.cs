@@ -39,13 +39,17 @@ namespace FishMedia
             "[Config]\n" +
             "  [Servers]\n" +
             "    [Web]\n" +
-            "      RootDir=www\n" +
-            "      Index=index.htm\n" +
+            "      RootDir = www # Also for: RootDir = \"www\"\n" +
+            "      Index = index.htm # Also for: Index = \'index.htm\'\n" +
             "\n" +
-            "      IpAddr=127.0.0.1\n" +
-            "      Port=8080\n" +
-            "      IpAddr6=::1\n" +
-            "      Port6=8080\n" +
+            "      # Any > IpAddress\n" +
+            "      IpV6 = true\n" +
+            "      #IpAddr = 127.0.0.1\n" +
+            "      IpAddr = Any\n" +
+            "      Port = 8080\n" +
+            "      #IpAddr6 = ::1\n" +
+            "      IpAddr6 = Any\n" +
+            "      Port6 = 8080\n" +
             "    END\n" +
             "\n" +
             "    [Rtmp]\n" +
@@ -176,8 +180,14 @@ namespace FishMedia
                         }
                         else
                         {
-                            string strNodeMemberKey = strConfigDataLine.Substring(0, strConfigDataLine.IndexOf('='));
-                            string strNodeMemberValue = strConfigDataLine.Substring(strConfigDataLine.IndexOf('=') + 1, strConfigDataLine.Length - 1 - strNodeMemberKey.Length);
+                            string strNodeMemberKey = strConfigDataLine.Substring(0, strConfigDataLine.IndexOf('=')).Trim();
+                            string strOriginNodeMemberValue = strConfigDataLine.Substring(strConfigDataLine.IndexOf('=') + 1).Trim();
+                            if ((strOriginNodeMemberValue.StartsWith('\'') && strOriginNodeMemberValue.EndsWith('\''))||(strOriginNodeMemberValue.StartsWith('\"') && strOriginNodeMemberValue.EndsWith('\"')))
+                            {
+                                strOriginNodeMemberValue = strOriginNodeMemberValue.Remove(0, 1);
+                                strOriginNodeMemberValue = strOriginNodeMemberValue.Remove(strOriginNodeMemberValue.Length-1, 1);
+                            }
+                            string strNodeMemberValue = strOriginNodeMemberValue;
 
                             NodeTree[strNodeMemberKey] = strNodeMemberValue;
                         }
