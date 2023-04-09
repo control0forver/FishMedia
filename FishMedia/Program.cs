@@ -213,6 +213,13 @@ namespace FishMedia
                 nodeIndex = config.nodeConfigNodeTree;
                 ReadConfig();
 
+                if (!Directory.Exists(RootDir)) { 
+                    Directory.CreateDirectory(RootDir);
+                    Directory.CreateDirectory(Path.Combine(RootDir, "images"));
+                    File.WriteAllText(Path.Combine(RootDir, Index),"<h>This is an image test.</h>\n<br/>\n<img src=\"images/Image1.png\"/>");
+                    File.WriteAllBytes(Path.Combine(RootDir, "images","Image1.png"),Resource1.Image1);
+                }
+
                 if (IpV6 == "true")
                 {
                     webServerThread = new Thread(webServerThreadHandlerV6) { IsBackground = true };
