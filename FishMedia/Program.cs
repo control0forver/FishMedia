@@ -46,10 +46,11 @@ namespace FishMedia
             {
                 if (Directory.Exists(requestFile) && !File.Exists(requestFile + "\\" + strIndex))
                 {
-                    requestFile = Path.Combine(ServerRoot, requestFile);
+                    //requestFile = Path.Combine(ServerRoot, Path.GetDirectoryName(requestFile));
                     var content = ListDirectory(requestFile, requestURL);
                     response = response.SetContent(content, Encoding.UTF8);
                     response.Content_Type = "text/html; charset=UTF-8";
+                    response.StatusCode = "200";
                 }
                 else
                 {
@@ -94,6 +95,7 @@ namespace FishMedia
             builder.Append(string.Format("<body><h1>{0}</h1><br/><ul>{1}{2}</ul></body></html>",
                  requestURL, filesList, foldersList));
 
+            string str = builder.ToString();
             return builder.ToString();
         }
     }
