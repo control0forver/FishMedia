@@ -91,8 +91,8 @@ namespace FishMedia
             var filesList = ConvertPath(files);
 
             StringBuilder builder = new StringBuilder();
-            builder.Append(string.Format("<html><head><title>{0}</title></head>", requestDirectory));
-            builder.Append(string.Format("<body><h1>{0}</h1><br/><ul>{1}{2}</ul></body></html>",
+            builder.Append(string.Format("<html><head><title>/{0}/</title></head>", requestDirectory));
+            builder.Append(string.Format("<body><h1>Index of /{0}/</h1><br/><ul>{1}{2}</ul></body></html>",
                  requestURL, filesList, foldersList));
 
             string str = builder.ToString();
