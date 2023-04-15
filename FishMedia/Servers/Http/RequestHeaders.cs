@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Servers.HTTP
+namespace FishMedia.Servers.HTTP
 {
     public enum RequestHeaders
     {

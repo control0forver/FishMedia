@@ -8,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Runtime.InteropServices;
 
-namespace Servers.HTTP
+namespace FishMedia.Servers.HTTP
 {
 
     public class HttpServer : IServer

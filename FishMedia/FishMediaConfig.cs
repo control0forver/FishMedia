@@ -257,7 +257,7 @@ namespace FishMedia
                 File.Open(strPath, FileMode.Open, FileAccess.ReadWrite).Dispose();
                 bPermissionAccess = true;
             }
-            catch (Exception eEx)
+            catch (Exception)
             {
                 bPermissionAccess = false;
             }

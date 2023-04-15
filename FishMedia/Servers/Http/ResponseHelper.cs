@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace Servers.HTTP
+namespace FishMedia.Servers.HTTP
 {
     public static class ResponseHelper
     {

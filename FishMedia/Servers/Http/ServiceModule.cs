@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 
-namespace Servers.HTTP
+namespace FishMedia.Servers.HTTP
 {
     public class ServiceModule
     {

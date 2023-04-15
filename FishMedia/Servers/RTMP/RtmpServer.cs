@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FishMedia.Servers.HTTP
+namespace FishMedia.Servers.RTMP
 {
-    public interface ILogger
+    public class RtmpServer
     {
-        void Log(object message);
+
     }
 }

@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Servers.HTTP
+namespace FishMedia.Servers.HTTP
 {
     /// <summary>
     /// HTTP请求定义

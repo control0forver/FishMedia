@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FishMedia.Servers.HTTP
+namespace FishMedia.Servers.RTSP
 {
-    public interface ILogger
+    public class RtspServer
     {
-        void Log(object message);
     }
 }
