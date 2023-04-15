@@ -1,4 +1,5 @@
 ﻿using FishMedia.Servers.HTTP;
+using FishMedia.Servers.RTMP;
 using System;
 using System.Net;
 using System.Text;
@@ -109,26 +110,36 @@ namespace FishMedia
 
     internal class Program
     {
-        static WebServer webServer = null;
-        static Thread webServerThread = null; 
-        static void webServerThreadHandler()
+        static Dictionary<string, RtmpServer> rtmpServers = new Dictionary<string, RtmpServer>();
+        static Dictionary<string, WebServer> webServers = new Dictionary<string, WebServer>();
+
+        static void webServerThreadHandler(object iServerId)
         {
+            WebServer webServer = webServers[(string)iServerId];
             webServer.Start();
         }
-        static void webServerThreadHandlerV6()
+        static void webServerThreadHandlerV6(object iServerId)
         {
+            WebServer webServer = webServers[(string)iServerId];
             webServer.StartV6();
+        }
+        static void rtmpServerThreadHandler(object iServerId)
+        {
+            RtmpServer rtmpServer = rtmpServers[(string)iServerId];
+            rtmpServer.Start();
         }
 
         static string strConfigPath = "FishMedia.conf";
 
         static int Main(string[] args)
         {
+            Console.ResetColor();
             Console.WriteLine("Fish Media   Ver. 1.0\n");
 
             Console.WriteLine("(Press Any Key to Continue)");
             Console.ReadKey(true);
 
+            #region Read Config
             FishMediaConfig config = new FishMediaConfig();
             config.SetPath(strConfigPath);
             if (!File.Exists(strConfigPath))
@@ -137,150 +148,321 @@ namespace FishMedia
                 config.SaveConfig();
             }
             config.LoadConfig();
+            #endregion
 
 
-            Console.WriteLine("Starting Web Server");
+            #region Web Server
+            Console.BackgroundColor = ConsoleColor.Magenta;
+            Console.WriteLine();
+            Console.WriteLine("Loading Web Server");
+            Console.WriteLine();
+            Console.ResetColor();
             {
                 FishMediaConfigNode nodeIndex = config.nodeConfigNodeTree;
-                string RootDir = "", Index = "", IpAddr = "", Port = "", IpAddr6 = "", Port6 = "", IpV6 = "";
+                string ServerId = "Web";
 
-                void ReadConfig()
+                // Read Default Config
+                //nodeIndex = new FishMediaConfig(true).nodeConfigNodeTree;
+
+                // Read Current Config
+                nodeIndex = config.nodeConfigNodeTree;
+
+                if (nodeIndex.Data.ContainsKey("Config"))
                 {
-                    if (nodeIndex.Data.ContainsKey("Config"))
+                    nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Config"];
+                    if (nodeIndex.Data.ContainsKey("Servers"))
                     {
-                        nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Config"];
-                        if (nodeIndex.Data.ContainsKey("Servers"))
+                        nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Servers"];
+                        foreach (var key in nodeIndex.Data.Keys)
                         {
-                            nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Servers"];
-                            if (nodeIndex.Data.ContainsKey("Web"))
+                            if (key.Length >= ServerId.Length && key.Substring(0, ServerId.Length) == ServerId)
                             {
-                                nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Web"];
+                                // Read Config
+                                FishMediaConfigNode node = (FishMediaConfigNode)nodeIndex.Next[key];
 
-                                foreach (var item in nodeIndex.Data)
+                                WebServerConfigData webServerConfigData = new WebServerConfigData { };
+                                foreach (var item in node.Data)
                                 {
+                                    Console.WriteLine($"{item.Key}: {item.Value}");
                                     switch (item.Key)
                                     {
                                         default:
                                             break;
 
+                                        case "Id":
+                                            {
+                                                webServerConfigData.Id = item.Value;
+                                                break;
+                                            }
+
                                         case "RootDir":
                                             {
-                                                RootDir = item.Value;
+                                                webServerConfigData.RootDir = item.Value;
                                                 break;
                                             }
                                         case "Index":
                                             {
-                                                Index = item.Value;
+                                                webServerConfigData.Index = item.Value;
                                                 break;
                                             }
                                         case "IpAddr":
                                             {
-                                                IpAddr = item.Value;
+                                                webServerConfigData.IpAddr = item.Value;
                                                 break;
                                             }
                                         case "Port":
                                             {
-                                                Port = item.Value;
+                                                webServerConfigData.Port = item.Value;
                                                 break;
                                             }
                                         case "IpAddr6":
                                             {
-                                                IpAddr6 = item.Value;
+                                                webServerConfigData.IpAddr6 = item.Value;
                                                 break;
                                             }
                                         case "Port6":
                                             {
-                                                Port6 = item.Value;
+                                                webServerConfigData.Port6 = item.Value;
                                                 break;
                                             }
                                         case "IpV6":
                                             {
-                                                IpV6 = item.Value;
+                                                webServerConfigData.IpV6 = item.Value;
                                                 break;
                                             }
                                     }
                                 }
+
+                                if (!Directory.Exists(webServerConfigData.RootDir))
+                                {
+                                    Directory.CreateDirectory(webServerConfigData.RootDir);
+                                    Directory.CreateDirectory(Path.Combine(webServerConfigData.RootDir, "images"));
+                                    File.WriteAllText(Path.Combine(webServerConfigData.RootDir, webServerConfigData.Index), "<h>This is an image test.</h>\n<br/>\n<img src=\"images/Image1.png\"/>");
+                                    File.WriteAllBytes(Path.Combine(webServerConfigData.RootDir, "images", "Image1.png"), Resource1.Image1);
+                                }
+
+                                // Start Server
+                                WebServer webServer = null;
+                                if (webServerConfigData.IpV6 == "true")
+                                {
+                                    IPAddress ipaddrIp = IPAddress.None;
+                                    if (webServerConfigData.IpAddr6 == "Any")
+                                        ipaddrIp = IPAddress.IPv6Any;
+                                    else
+                                        ipaddrIp = IPAddress.Parse(webServerConfigData.IpAddr6);
+                                    webServer = new WebServer(ipaddrIp, int.Parse(webServerConfigData.Port6), webServerConfigData.RootDir, webServerConfigData.Index);
+                                    webServer.SetRoot(webServerConfigData.RootDir);
+                                    webServer.Logger = new ConsoleLogger();
+                                    webServers[webServerConfigData.Id] = webServer;
+                                    new Thread(webServerThreadHandlerV6) { IsBackground = true }.Start(webServerConfigData.Id);
+                                }
+                                else
+                                {
+                                    IPAddress ipaddrIp = IPAddress.None;
+                                    if (webServerConfigData.IpAddr == "Any")
+                                        ipaddrIp = IPAddress.Any;
+                                    else
+                                        ipaddrIp = IPAddress.Parse(webServerConfigData.IpAddr);
+                                    webServer = new WebServer(ipaddrIp, int.Parse(webServerConfigData.Port), webServerConfigData.RootDir, webServerConfigData.Index);
+                                    webServer.Logger = new ConsoleLogger();
+                                    webServers[webServerConfigData.Id] = webServer;
+                                    new Thread(webServerThreadHandler) { IsBackground = true }.Start(webServerConfigData.Id);
+                                }
+
+                                Console.WriteLine("Web Server: {0} Running\n", webServerConfigData.Id);
                             }
                         }
                     }
                 }
 
+            }
+            Console.BackgroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine();
+            Console.WriteLine("Web Server All Started");
+            Console.WriteLine();
+            Console.ResetColor();
+            #endregion
+
+            #region Rtmp Server
+            ConsoleColor consoleColor = Console.BackgroundColor;
+            Console.BackgroundColor = ConsoleColor.Magenta;
+            Console.WriteLine();
+            Console.WriteLine("=== Loading Rtmp Server ===");
+            Console.WriteLine();
+            Console.ResetColor();
+            {
+                FishMediaConfigNode nodeIndex = config.nodeConfigNodeTree;
+                string ServerId = "Rtmp";
+
                 // Read Default Config
                 //nodeIndex = new FishMediaConfig(true).nodeConfigNodeTree;
-                //ReadConfig();
 
                 // Read Current Config
                 nodeIndex = config.nodeConfigNodeTree;
-                ReadConfig();
 
-                if (!Directory.Exists(RootDir)) { 
-                    Directory.CreateDirectory(RootDir);
-                    Directory.CreateDirectory(Path.Combine(RootDir, "images"));
-                    File.WriteAllText(Path.Combine(RootDir, Index),"<h>This is an image test.</h>\n<br/>\n<img src=\"images/Image1.png\"/>");
-                    File.WriteAllBytes(Path.Combine(RootDir, "images","Image1.png"),Resource1.Image1);
+                if (nodeIndex.Data.ContainsKey("Config"))
+                {
+                    nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Config"];
+                    if (nodeIndex.Data.ContainsKey("Servers"))
+                    {
+                        nodeIndex = (FishMediaConfigNode)nodeIndex.Next["Servers"];
+                        foreach (var key in nodeIndex.Data.Keys)
+                        {
+                            if (key.Length >= ServerId.Length && key.Substring(0, ServerId.Length) == ServerId)
+                            {
+                                // Read Config
+                                FishMediaConfigNode node = (FishMediaConfigNode)nodeIndex.Next[key];
+
+                                RtmpServerConfigData rtmpServerConfigData = new RtmpServerConfigData { };
+                                foreach (var item in node.Data)
+                                {
+                                    Console.WriteLine($"{item.Key}: {item.Value}");
+                                    switch (item.Key)
+                                    {
+                                        default:
+                                            break;
+
+                                        case "Id":
+                                            {
+                                                rtmpServerConfigData.Id = item.Value;
+                                                break;
+                                            }
+                                        case "IpAddr":
+                                            {
+                                                rtmpServerConfigData.IpAddr = item.Value;
+                                                break;
+                                            }
+                                        case "Port":
+                                            {
+                                                rtmpServerConfigData.Port = item.Value;
+                                                break;
+                                            }
+                                        case "IpAddr6":
+                                            {
+                                                rtmpServerConfigData.IpAddr6 = item.Value;
+                                                break;
+                                            }
+                                        case "Port6":
+                                            {
+                                                rtmpServerConfigData.Port6 = item.Value;
+                                                break;
+                                            }
+                                        case "IpV6":
+                                            {
+                                                rtmpServerConfigData.IpV6 = item.Value;
+                                                break;
+                                            }
+                                    }
+                                }
+
+                                // Start Server
+                                RtmpServer rtmpServer = null;
+                                IPAddress ipaddrIp = IPAddress.None;
+                                if (rtmpServerConfigData.IpAddr == "Any")
+                                    ipaddrIp = IPAddress.Any;
+                                else
+                                    ipaddrIp = IPAddress.Parse(rtmpServerConfigData.IpAddr);
+                                rtmpServer = new RtmpServer(ipaddrIp, (ushort)int.Parse(rtmpServerConfigData.Port));
+                                rtmpServers[rtmpServerConfigData.Id] = rtmpServer;
+                                new Thread(rtmpServerThreadHandler) { IsBackground = true }.Start(rtmpServerConfigData.Id);
+
+                                Console.WriteLine("Rtmp Server: {0} Running\n", rtmpServerConfigData.Id);
+                            }
+                        }
+                    }
                 }
 
-                if (IpV6 == "true")
-                {
-                    webServerThread = new Thread(webServerThreadHandlerV6) { IsBackground = true };
-                    IPAddress ipaddrIp = IPAddress.None;
-                    if (IpAddr6 == "Any")
-                        ipaddrIp = IPAddress.IPv6Any;
-                    else
-                        ipaddrIp = IPAddress.Parse(IpAddr6);
-                    webServer = new WebServer(ipaddrIp, int.Parse(Port6), RootDir, Index);
-                    webServer.SetRoot(RootDir);
-                    webServer.Logger = new ConsoleLogger();
-                    webServerThread.Start();
-                }
-                else
-                {
-                    webServerThread = new Thread(webServerThreadHandler) { IsBackground = true };
-                    IPAddress ipaddrIp = IPAddress.None;
-                    if (IpAddr == "Any")
-                        ipaddrIp = IPAddress.Any;
-                    else
-                        ipaddrIp = IPAddress.Parse(IpAddr);
-                    webServer = new WebServer(ipaddrIp, int.Parse(Port), RootDir, Index);
-                    webServer.Logger = new ConsoleLogger();
-                    webServerThread.Start();
-                }
             }
+            Console.BackgroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine();
+            Console.Write("=== Rtmp Server All Started ===");
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.ResetColor();
+            #endregion
 
+            #region Shell
             while (true)
             {
+                string strCmdLineData = "";
                 string strCmdLine = "";
+                string strCmdExec = "";
+                string strCmdArgString = null;
+                string[] strCmdArgs = null;
 
                 Console.Write(">");
-                strCmdLine = Console.ReadLine().Trim();
+                strCmdLineData = Console.ReadLine();
+                strCmdLine = strCmdLineData.Trim();
 
                 if (strCmdLine == string.Empty)
                     continue;
 
+                strCmdLine += ' ';
+                strCmdExec = strCmdLine.Remove(strCmdLine.IndexOf(' '));
+                strCmdArgString = strCmdLine.Remove(0, strCmdLine.IndexOf(' ')).Trim();
+                strCmdArgs = strCmdArgString.Split(' ').Where(s => !string.IsNullOrEmpty(s)).ToArray();
+
                 {
-                    if (strCmdLine == "help")
+                    bool bCommandFound = false;
+                    if (strCmdExec == "help")
                     {
+                        bCommandFound = true;
+
                         Console.WriteLine("Commands:");
                         Console.WriteLine(" help - Show all commands");
                         Console.WriteLine(" show - Show current config");
+                        Console.WriteLine(" list - List servers");
                         Console.WriteLine(" exit - Exit all servers");
                     }
 
-                    if (strCmdLine == "show")
+                    if (strCmdExec == "show")
                     {
+                        bCommandFound = true;
+
                         Console.WriteLine(config.strConfigData);
                     }
 
-                    if (strCmdLine == "exit")
+                    if (strCmdExec == "list")
                     {
-                        webServer.Stop();
-                        if (webServerThread.IsAlive)
-                            webServerThread.Join();
+                        bCommandFound = true;
+
+                        Console.WriteLine("Servers:");
+
+                        Console.WriteLine(" [Web]");
+                        foreach (var item in webServers)
+                        {
+                            Console.WriteLine($"  Id: {item.Key}");
+                        }
+                        Console.WriteLine(" [Rtmp]");
+                        foreach (var item in rtmpServers)
+                        {
+                            Console.WriteLine($"  Id: {item.Key}");
+                        }
+                    }
+
+                    if (strCmdExec == "exit")
+                    {
+                        bCommandFound = true;
+
+                        foreach (var item in webServers)
+                        {
+                            item.Value.Stop();
+                        }
+                        foreach (var item in rtmpServers)
+                        {
+                            item.Value.Stop();
+                        }
 
                         break;
                     }
+
+                    if (!bCommandFound)
+                    {
+                        Console.WriteLine("Unknown Command: {0}", strCmdExec);
+                    }
                 }
             }
+            #endregion
 
             Console.WriteLine("[Debug]Program Finished (Press Any Key)");
             Console.ReadKey(true);

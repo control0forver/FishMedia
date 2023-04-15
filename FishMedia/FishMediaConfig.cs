@@ -32,6 +32,27 @@ namespace FishMedia
     };
     public class FishMediaConfigNode : Node<FishMediaConfigItem, string> { };
 
+    public class ServerConfigData
+    {
+        public string Id = "";
+
+        public ServerConfigData() { }
+    }
+
+    public class WebServerConfigData : ServerConfigData
+    {
+        public string RootDir = "", Index = "", IpAddr = "", Port = "", IpAddr6 = "", Port6 = "", IpV6 = "";
+
+        public WebServerConfigData() { }
+    }
+
+    public class RtmpServerConfigData : ServerConfigData
+    {
+        public string IpAddr = "", Port = "", IpAddr6 = "", Port6 = "", IpV6 = "";
+
+        public RtmpServerConfigData() { }
+    }
+
     public class FishMediaConfig
     {
         public const string c_strDefaultConfig =
@@ -39,6 +60,7 @@ namespace FishMedia
             "[Config]\n" +
             "  [Servers]\n" +
             "    [Web]\n" +
+            "      Id = 'web1'\n" +
             "      RootDir = www # Also for: RootDir = \"www\"\n" +
             "      Index = index.htm # Also for: Index = \'index.htm\'\n" +
             "\n" +
@@ -52,8 +74,21 @@ namespace FishMedia
             "      IpAddr6 = Any\n" +
             "      Port6 = 8080\n" +
             "    END\n" +
+            "\n"+
+            "    [Web] # Web Server No.2\n" +
+            "      Id = 'web2'\n" +
+            "      RootDir = www\n" +
+            "      Index = index.htm\n" +
+            "\n" +
+            "      IpAddr = Any\n" +
+            "      Port = 8088\n" +
+            "    END\n" +
             "\n" +
             "    [Rtmp]\n" +
+            "    Id = 'rtmp1'\n" +
+            "\n" +
+            "      IpAddr = Any\n" +
+            "      Port = 1935\n" +
             "    END\n" +
             "  END\n" +
             "END\n" +
@@ -160,7 +195,7 @@ namespace FishMedia
                     // Igrone comment
                     if (strConfigDataLine.Contains('#'))
                     {
-                        strConfigDataLine = strConfigDataLine.Remove(strConfigDataLine.IndexOf('#'));
+                        strConfigDataLine = strConfigDataLine.Remove(strConfigDataLine.IndexOf('#')).Trim();
                     }
 
                     if (strConfigDataLine.Length > 0)
@@ -172,6 +207,22 @@ namespace FishMedia
                         if (strConfigDataLine.StartsWith('[') && strConfigDataLine.EndsWith(']'))
                         {
                             string strNodeKey = strConfigDataLine.Substring(strConfigDataLine.IndexOf('[') + 1, strConfigDataLine.IndexOf(']') - 1 - strConfigDataLine.IndexOf('['));
+
+                            if (NodeTree.ContainsKey(strNodeKey))
+                            {
+                                uint u_iExternId = 0;
+                                while (u_iExternId != uint.MaxValue)
+                                {
+                                    string strMultiKey = strNodeKey + ' ' + u_iExternId;
+                                    if (NodeTree.ContainsKey(strMultiKey))
+                                        u_iExternId++;
+                                    else
+                                    {
+                                        strNodeKey = strMultiKey;
+                                        break;
+                                    }
+                                }
+                            }
                             NodeTree[strNodeKey] = ""; // Add Node
 
                             FishMediaConfigNode NextNood = new FishMediaConfigNode();
