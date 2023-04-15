@@ -8,6 +8,6 @@ namespace FishMedia.Servers.RTMP
 {
     public class RtmpServer
     {
-
+        public RtmpServer() { }
     }
 }
