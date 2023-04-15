@@ -110,6 +110,7 @@ namespace FishMedia
 
     internal class Program
     {
+        static List<Thread> threads= new List<Thread>();
         static Dictionary<string, RtmpServer> rtmpServers = new Dictionary<string, RtmpServer>();
         static Dictionary<string, WebServer> webServers = new Dictionary<string, WebServer>();
 
@@ -254,7 +255,10 @@ namespace FishMedia
                                     webServer.SetRoot(webServerConfigData.RootDir);
                                     webServer.Logger = new ConsoleLogger();
                                     webServers[webServerConfigData.Id] = webServer;
-                                    new Thread(webServerThreadHandlerV6) { IsBackground = true }.Start(webServerConfigData.Id);
+
+                                    Thread thread = new Thread(webServerThreadHandlerV6) { IsBackground = true };
+                                    thread.Start(webServerConfigData.Id);
+                                    threads.Add(thread);
                                 }
                                 else
                                 {
@@ -266,7 +270,10 @@ namespace FishMedia
                                     webServer = new WebServer(ipaddrIp, int.Parse(webServerConfigData.Port), webServerConfigData.RootDir, webServerConfigData.Index);
                                     webServer.Logger = new ConsoleLogger();
                                     webServers[webServerConfigData.Id] = webServer;
-                                    new Thread(webServerThreadHandler) { IsBackground = true }.Start(webServerConfigData.Id);
+                                    
+                                    Thread thread = new Thread(webServerThreadHandler) { IsBackground = true };
+                                    thread.Start(webServerConfigData.Id);
+                                    threads.Add(thread);
                                 }
 
                                 Console.WriteLine("Web Server: {0} Running\n", webServerConfigData.Id);
@@ -366,7 +373,10 @@ namespace FishMedia
                                     ipaddrIp = IPAddress.Parse(rtmpServerConfigData.IpAddr);
                                 rtmpServer = new RtmpServer(ipaddrIp, (ushort)int.Parse(rtmpServerConfigData.Port));
                                 rtmpServers[rtmpServerConfigData.Id] = rtmpServer;
-                                new Thread(rtmpServerThreadHandler) { IsBackground = true }.Start(rtmpServerConfigData.Id);
+
+                                Thread thread = new Thread(rtmpServerThreadHandler) { IsBackground = true };
+                                thread.Start(rtmpServerConfigData.Id);
+                                threads.Add(thread);
 
                                 Console.WriteLine("Rtmp Server: {0} Running\n", rtmpServerConfigData.Id);
                             }
@@ -446,6 +456,7 @@ namespace FishMedia
                     {
                         bCommandFound = true;
 
+                        // Stop Servers
                         foreach (var item in webServers)
                         {
                             item.Value.Stop();
@@ -453,6 +464,12 @@ namespace FishMedia
                         foreach (var item in rtmpServers)
                         {
                             item.Value.Stop();
+                        }
+
+                        // Wait Threads
+                        foreach (var thread in threads)
+                        {
+                            thread.Join();
                         }
 
                         break;
@@ -466,7 +483,9 @@ namespace FishMedia
             }
             #endregion
 
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("[Debug]Program Finished (Press Any Key)");
+            Console.ResetColor();
             Console.ReadKey(true);
             return 0;
         }
