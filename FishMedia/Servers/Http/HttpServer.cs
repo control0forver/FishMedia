@@ -131,7 +131,7 @@ namespace FishMedia.Servers.HTTP
             this.Protocol = serverCertificate == null ? Protocols.Http : Protocols.Https;
             this.IsRunning = true;
             this.serverListener.Start();
-            if (ServerIP.AddressFamily == AddressFamily.InterNetwork)
+            if (!Utils.Utils.IsV6Address(ServerIP))
                 this.Log(string.Format("Sever is running at {0}://{1}:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
             else
                 this.Log(string.Format("Sever is running at {0}://[{1}]:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
