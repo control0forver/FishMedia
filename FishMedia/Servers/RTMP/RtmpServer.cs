@@ -81,13 +81,16 @@ namespace FishMedia.Servers.RTMP
         private void ClientHandler(TcpClient tcpcliClient)
         {
             Socket sockClientSocket = tcpcliClient.Client;
+            #region Cient Start
             Console.WriteLine("New Rtmp Client Connection:");
             Console.WriteLine("  Remote IPAddress: {0}", ((IPEndPoint)sockClientSocket.RemoteEndPoint).Address.ToString());
             Console.WriteLine("  Remote Port: {0}", ((IPEndPoint)sockClientSocket.RemoteEndPoint).Port.ToString());
 
             if (!tcpcliClient.Connected)
                 return;
+            #endregion
 
+            #region HandShaking
             SimpleHandShakePackets.C0 GetC0()
             {
                 byte[] buffer = new byte[SimpleHandShakePackets.C0.iSize];
@@ -249,11 +252,16 @@ namespace FishMedia.Servers.RTMP
                 Console.WriteLine("Rtmp Client HandShaked Successfully:");
                 Console.WriteLine("  Remote IPAddress: {0}", ((IPEndPoint)sockClientSocket.RemoteEndPoint).Address.ToString());
                 Console.WriteLine("  Remote Port: {0}", ((IPEndPoint)sockClientSocket.RemoteEndPoint).Port.ToString());
+
             }
             catch (Exception)
             {
                 return;
             }
+            #endregion
+
+            // TODO:
+            // After HandShaking
         }
 
     }
