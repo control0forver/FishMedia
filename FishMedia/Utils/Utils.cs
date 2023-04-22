@@ -26,6 +26,23 @@ namespace FishMedia.Utils
             return IsV6Address(iPAddress.AddressFamily);
         }
 
+        public static byte[] TrimByteArrayEnd(byte[] arr_byteBytes)
+        {
+            List<byte> list = arr_byteBytes.ToList();
+            for (int i = arr_byteBytes.Length - 1; i >= 0; i--)
+            {
+                if (arr_byteBytes[i] == 0x00)
+                {
+                    list.RemoveAt(i);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return list.ToArray();
+        }
+
         public static bool _CompareArr<T>(T[] arr1, T[] arr2)
         {
             var q = from a in arr1 join b in arr2 on a equals b select a;

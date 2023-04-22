@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FishMedia.Servers.RTMP
 {
-    public static class RtmpDefs
+    public static class RtmpProtocol
     {
         public static class SimpleHandShakePackets
         {

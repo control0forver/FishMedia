@@ -6,7 +6,8 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using static FishMedia.Servers.RTMP.RtmpDefs;
+using System.Xml;
+using static FishMedia.Servers.RTMP.RtmpProtocol;
 
 namespace FishMedia.Servers.RTMP
 {
@@ -260,8 +261,43 @@ namespace FishMedia.Servers.RTMP
             }
             #endregion
 
-            // TODO:
-            // After HandShaking
+            #region Connection
+            List<byte> arr_byteConnectionBytes = new List<byte>();
+
+            const int iBufferSize = 2048;
+            while (true)
+            {
+                byte[] bt = new byte[iBufferSize];
+                tcpcliClient.GetStream().Read(bt);
+                bt = Utils.Utils.TrimByteArrayEnd(bt);
+                arr_byteConnectionBytes.AddRange(bt);
+
+                if (bt.Length < iBufferSize)
+                    break;
+            }
+
+            File.WriteAllBytes(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\A.dat", arr_byteConnectionBytes.ToArray());
+
+            AMF.Reader0 amf0Reader = new AMF.Reader0(Utils.Utils.SubArr(arr_byteConnectionBytes.ToArray(), 28));
+
+            bool b = true;
+            while (b)
+            {
+                try
+                {
+                    object obj = amf0Reader.Read();
+                    if (obj.GetType() == typeof(string))
+                    {
+                        string str = (string)obj;
+                        ;
+                    }
+                }
+                catch (Exception) { continue; }
+            }
+
+            tcpcliClient.Close();
+            #endregion
+
         }
 
     }
