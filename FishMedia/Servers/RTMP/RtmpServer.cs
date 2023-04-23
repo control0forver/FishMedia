@@ -278,7 +278,7 @@ namespace FishMedia.Servers.RTMP
 
             File.WriteAllBytes(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\A.dat", arr_byteConnectionBytes.ToArray());
 
-            AMF.Reader0 amf0Reader = new AMF.Reader0(Utils.Utils.SubArr(arr_byteConnectionBytes.ToArray(), 28));
+            AMF.Reader0 amf0Reader = new AMF.Reader0(Utils.Utils.SubArr(arr_byteConnectionBytes.ToArray(), 0));
 
             bool b = true;
             while (b)
