@@ -103,7 +103,15 @@ namespace FishMedia.Servers.RTMP
             private string ReadAMFString()
             {
                 byte[] _length = reader.ReadBytes(2);
-                ushort length = (ushort)(_length[1] + (_length[0] << 8));
+                ushort length = 0;
+                if (BitConverter.IsLittleEndian)
+                {
+                     length = (ushort)(_length[1] + (_length[0] << 8));
+                }
+                else
+                {
+                     length = (ushort)(_length[0] + (_length[1] << 8));
+                }
                 byte[] bytes = reader.ReadBytes(length);
                 return Encoding.UTF8.GetString(bytes);
             }
