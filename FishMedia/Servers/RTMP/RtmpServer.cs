@@ -281,8 +281,7 @@ namespace FishMedia.Servers.RTMP
             // AMF.Reader0 amf0Reader = new AMF.Reader0(Utils.Utils.SubArr(arr_byteConnectionBytes.ToArray(), 28));
             AMF.Reader0 amf0Reader = new AMF.Reader0(arr_byteConnectionBytes.ToArray());
 
-            bool b = true;
-            while (b)
+            while (amf0Reader.IsStreamReadable())
             {
                 try
                 {

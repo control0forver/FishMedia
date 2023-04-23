@@ -62,6 +62,11 @@ namespace FishMedia.Servers.RTMP
                 reader = new BinaryReader(stream);
             }
 
+            public bool IsStreamReadable()
+            {
+                return reader.PeekChar() != '\0';
+            }
+
             public object Read()
             {
                 byte type = reader.ReadByte();
