@@ -82,6 +82,7 @@ namespace FishMedia.Servers.RTMP
         private void ClientHandler(TcpClient tcpcliClient)
         {
             Socket sockClientSocket = tcpcliClient.Client;
+
             #region Cient Start
             Console.WriteLine("New Rtmp Client Connection:");
             Console.WriteLine("  Remote IPAddress: {0}", ((IPEndPoint)sockClientSocket.RemoteEndPoint).Address.ToString());
@@ -182,8 +183,7 @@ namespace FishMedia.Servers.RTMP
                     if (!Utils.Utils.CompareArr(C1.data.GetZero(), new byte[] { 0, 0, 0, 0 }))
                     {
                         // Client May Be Error, Close and Exit
-                        tcpcliClient.Close();
-                        return;
+                        goto ConnectionEnd;
                     }
 
                     // Make S1
@@ -238,8 +238,7 @@ namespace FishMedia.Servers.RTMP
                     if (!Utils.Utils.CompareArr(C2.data.data, S1.data.data))
                     {
                         // Client Error: C2 not Copy of S1
-                        tcpcliClient.Close();
-                        return;
+                        goto ConnectionEnd;
                     }
 
                     // Make S2
@@ -264,41 +263,41 @@ namespace FishMedia.Servers.RTMP
             #region Connection
             List<byte> arr_byteConnectionBytes = new List<byte>();
 
-            const int iBufferSize = 2048;
-            while (true)
+            #region Get Connect Packet
+            try
             {
-                byte[] bt = new byte[iBufferSize];
-                tcpcliClient.GetStream().Read(bt);
-                bt = Utils.Utils.TrimByteArrayEnd(bt);
-                arr_byteConnectionBytes.AddRange(bt);
-
-                if (bt.Length < iBufferSize)
-                    break;
-            }
-
-            File.WriteAllBytes(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\A.dat", arr_byteConnectionBytes.ToArray());
-
-            // AMF.Reader0 amf0Reader = new AMF.Reader0(Utils.Utils.SubArr(arr_byteConnectionBytes.ToArray(), 28));
-            AMF.Reader0 amf0Reader = new AMF.Reader0(arr_byteConnectionBytes.ToArray());
-
-            while (amf0Reader.IsStreamReadable())
-            {
-                try
+                const int iBufferSize = 2048;
+                while (true)
                 {
-                    object obj = amf0Reader.Read();
-                    if (obj.GetType() == typeof(string))
-                    {
-                        string str = (string)obj;
-                        ;
-                    }
+                    byte[] bt = new byte[iBufferSize];
+                    tcpcliClient.GetStream().Read(bt);
+                    bt = Utils.Utils.TrimByteArrayEnd(bt);
+                    arr_byteConnectionBytes.AddRange(bt);
+
+                    if (bt.Length < iBufferSize)
+                        break;
                 }
-                catch (Exception) { continue; }
+            }
+            catch (Exception)
+            {
+                goto ConnectionEnd;
             }
 
-            tcpcliClient.Close();
             #endregion
 
-        }
+            #region Process Connect Packet
+            if (arr_byteConnectionBytes[0] == 0x02)
+            {
+                
+            }
+            #endregion
 
+            #endregion
+
+
+ConnectionEnd:
+            tcpcliClient.Close();
+            return;
+        }
     }
 }

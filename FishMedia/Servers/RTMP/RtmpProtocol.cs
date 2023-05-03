@@ -8,6 +8,47 @@ namespace FishMedia.Servers.RTMP
 {
     public static class RtmpProtocol
     {
+        #region Const Defs
+
+        public const int RTMP_MAX_HEADER_SIZE = 18;
+
+        public const int RTMP_PACKET_SIZE_LARGE = 0;
+        public const int RTMP_PACKET_SIZE_MEDIUM = 1;
+        public const int RTMP_PACKET_SIZE_SMALL = 2;
+        public const int RTMP_PACKET_SIZE_MINIMUM = 3;
+
+        #endregion
+
+        public struct RTMPChunk
+        {
+            int iHeaderSize;
+            int iChunkSize;
+            char[] dChunk;
+            char[] c_header;
+
+            public RTMPChunk()
+            {
+                iHeaderSize = 0;
+                iChunkSize = 0;
+                dChunk = new char[4];
+                c_header = new char[RTMP_MAX_HEADER_SIZE];
+            }
+        }
+
+        public struct RTMPPacket
+        {
+            byte u_iHeaderType;
+            byte u_iPacketType;
+            byte u_iHasAbsTimestamp;
+            int iChannel;
+            uint u_iTimeStamp;
+            int u_iInfoField2;
+            uint u_iBodySize;
+            uint u_iBytesRead;
+            RTMPChunk rtmpchkChunk;
+            char[] dBody;
+        }
+
         public static class SimpleHandShakePackets
         {
             public class C0
