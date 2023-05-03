@@ -285,12 +285,15 @@ namespace FishMedia.Servers.RTMP
 
             #endregion
 
+            // TODO: Process Connnect Packet
             #region Process Connect Packet
             if (arr_byteConnectionBytes[0] == 0x02)
             {
                 
             }
             #endregion
+
+            // TODO: Streaming
 
             #endregion
 
