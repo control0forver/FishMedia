@@ -266,15 +266,14 @@ namespace FishMedia.Servers.RTMP
             #region Get Connect Packet
             try
             {
-                const int iBufferSize = 2048;
                 while (true)
                 {
-                    byte[] bt = new byte[iBufferSize];
+                    byte[] bt = new byte[RtmpProtocol.iMaxNetRecvBufferSize];
                     tcpcliClient.GetStream().Read(bt);
                     bt = Utils.Utils.TrimByteArrayEnd(bt);
                     arr_byteConnectionBytes.AddRange(bt);
 
-                    if (bt.Length < iBufferSize)
+                    if (bt.Length < iMaxNetRecvBufferSize)
                         break;
                 }
             }
