@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace FishMedia.Utils
@@ -56,6 +57,42 @@ namespace FishMedia.Utils
                 return (uint)((arr_byteData[iOffset] << 24) | (arr_byteData[iOffset + 1] << 16) | (arr_byteData[iOffset + 2] << 8) | arr_byteData[iOffset + 3]);
             }
 
+        }
+
+        public static byte[] CharArrayToByteArray(char[] arr_chCharArray)
+        {
+            int iLength = arr_chCharArray.Length;
+            byte[] byteArray = new byte[iLength];
+
+            for (int i = 0; i < iLength; ++i)
+            {
+                byteArray[i] = (byte)arr_chCharArray[i];
+            }
+
+            return byteArray;
+        }
+
+        public static char[] ByteArrayToCharArray(byte[] arr_byteBytesArray)
+        {
+            int iLength = arr_byteBytesArray.Length;
+            char[] charArray = new char[iLength];
+
+            for (int i = 0; i < iLength; ++i)
+            {
+                charArray[i] = (char)arr_byteBytesArray[i];
+            }
+
+            return charArray;
+        }
+
+        public static bool ToBoolean(int iValue)
+        {
+            return 0 == iValue ? false : true;
+        }
+
+        public static int ToInteger(bool bValue)
+        {
+            return false == bValue ? 0 : 1;
         }
 
         public static bool IsV6Address(AddressFamily addressFamily)

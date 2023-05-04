@@ -291,7 +291,7 @@ namespace FishMedia.Servers.RTMP
 
             RTMPPacket pktRtmpPacket = new RTMPPacket(arr_byteConnectionBytes.ToArray());
 
-            switch (pktRtmpPacket)
+            switch (pktRtmpPacket.u_iHeaderType)
             {
                 default: break;
             }

@@ -132,10 +132,17 @@ namespace FishMedia
 
         static string strConfigPath = "FishMedia.conf";
 
+        static void TestCode()
+        {
+            Console.WriteLine(string.Concat(AMF.AMF_EncodeString(AMF.AVal.AVC("adwadadawASFESFEado109423834()"))));
+        }
+
         static int Main(string[] args)
         {
             Console.ResetColor();
             Console.WriteLine("Fish Media   Ver. 1.0\n");
+
+            TestCode();
 
             Console.WriteLine("(Press Any Key to Continue)");
             Console.ReadKey(true);

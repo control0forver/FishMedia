@@ -5,6 +5,12 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using static FishMedia.Servers.RTMP.RtmpProtocol;
+using static FishMedia.Servers.RTMP.AMF;
+using static FishMedia.Servers.RTMP.AMF.AVal;
+using System.IO.Compression;
+using System.Net.NetworkInformation;
+using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 
 namespace FishMedia.Servers.RTMP
 {
@@ -23,6 +29,56 @@ namespace FishMedia.Servers.RTMP
             public static readonly int iRtmpBufferCacheSize = (16 * iMaxNetRecvBufferSize);
             public static readonly int iRtmpChannels = 65600;
             public static readonly int iRtmpMaxHeaderSize = 18;
+
+            public static readonly AVal _avCheckbw = AVC("_checkbw");
+            public static readonly AVal _avError = AVC("_error");
+            public static readonly AVal _avOnbwcheck = AVC("_onbwcheck");
+            public static readonly AVal _avOnbwdone = AVC("_onbwdone");
+            public static readonly AVal _avResult = AVC("_result");
+            public static readonly AVal av0 = AVC("0");
+            public static readonly AVal avApp = AVC("app");
+            public static readonly AVal avAudio = AVC("audio");
+            public static readonly AVal avAudioCodecs = AVC("audioCodecs");
+            public static readonly AVal avCapabilities = AVC("capabilities");
+            public static readonly AVal avClose = AVC("close");
+            public static readonly AVal avCode = AVC("code");
+            public static readonly AVal avConnect = AVC("connect");
+            public static readonly AVal avCreateStream = AVC("createStream");
+            public static readonly AVal avDeleteStream = AVC("deleteStream");
+            public static readonly AVal avDescription = AVC("description");
+            public static readonly AVal avDuration = AVC("duration");
+            public static readonly AVal avFCSubscribe = AVC("FCSubscribe");
+            public static readonly AVal avFCUnpublish = AVC("FCUnpublish");
+            public static readonly AVal avFlashVer = AVC("flashVer");
+            public static readonly AVal avFpad = AVC("fpad");
+            public static readonly AVal avLevel = AVC("level");
+            public static readonly AVal avLive = AVC("live");
+            public static readonly AVal avNonprivate = AVC("nonprivate");
+            public static readonly AVal avObjectEncoding = AVC("objectEncoding");
+            public static readonly AVal avOnBWDone = AVC("onBWDone");
+            public static readonly AVal avOnFCSubscribe = AVC("onFCSubscribe");
+            public static readonly AVal avOnFCUnsubscribe = AVC("onFCUnsubscribe");
+            public static readonly AVal avOnMetaData = AVC("onMetaData");
+            public static readonly AVal avOnStatus = AVC("onStatus");
+            public static readonly AVal avPageUrl = AVC("pageUrl");
+            public static readonly AVal avPause = AVC("pause");
+            public static readonly AVal avPing = AVC("ping");
+            public static readonly AVal avPlay = AVC("play");
+            public static readonly AVal avPlaylist_ready = AVC("playlist_ready");
+            public static readonly AVal avPong = AVC("pong");
+            public static readonly AVal avPublish = AVC("publish");
+            public static readonly AVal avRecord = AVC("record");
+            public static readonly AVal avReleaseStream = AVC("releaseStream");
+            public static readonly AVal avSecureToken = AVC("secureToken");
+            public static readonly AVal avSecureTokenResponse = AVC("secureTokenResponse");
+            public static readonly AVal avSeek = AVC("seek");
+            public static readonly AVal avSet_playlist = AVC("set_playlist");
+            public static readonly AVal avSwfUrl = AVC("swfUrl");
+            public static readonly AVal avTcUrl = AVC("tcUrl");
+            public static readonly AVal avType = AVC("type");
+            public static readonly AVal avVideo = AVC("video");
+            public static readonly AVal avVideoCodecs = AVC("videoCodecs");
+            public static readonly AVal avVideoFunction = AVC("videoFunction");
         }
 
         public enum RtmpFeatures
