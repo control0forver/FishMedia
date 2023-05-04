@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33403.182
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishMedia", "FishMedia\FishMedia.csproj", "{30850775-FC50-45BC-9352-8E5103E22009}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FishMedia", "FishMedia\FishMedia.csproj", "{30850775-FC50-45BC-9352-8E5103E22009}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{932BFE36-B87D-4F34-BA2D-B2FAD948A695}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

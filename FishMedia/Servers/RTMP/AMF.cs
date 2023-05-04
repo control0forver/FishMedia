@@ -46,6 +46,12 @@ namespace FishMedia.Servers.RTMP
             }
         }
 
+        public struct AVal
+        {
+            char[] arr_chValue;
+            int iLength;
+        }
+
         public class Reader0
         {
             // Data

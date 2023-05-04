@@ -10,6 +10,53 @@ namespace FishMedia.Utils
 {
     public static class Utils
     {
+        public static class BinaryConverter
+        {
+            /*public static int ReadReverseInt24(BinaryReader reader)
+            {
+                byte[] bytes = reader.ReadBytes(3);
+                Array.Reverse(bytes);
+                int value = BitConverter.ToInt32(bytes, 0);
+                return value >> 8;
+            }
+
+            public static uint ReadReverseUInt24(BinaryReader reader)
+            {
+                byte[] bytes = reader.ReadBytes(3);
+                Array.Reverse(bytes);
+                uint value = BitConverter.ToUInt32(bytes, 0);
+                return value >> 8;
+            }
+
+            public static uint ReadReverseUInt32(BinaryReader reader)
+            {
+                byte[] bytes = reader.ReadBytes(4);
+                Array.Reverse(bytes);
+                uint value = BitConverter.ToUInt32(bytes, 0);
+                return value;
+            }*/
+
+            public static int ReadReverseInt24(byte[] arr_byteData, int iOffset = 0)
+            {
+                int value = (arr_byteData[iOffset] << 16) | (arr_byteData[iOffset + 1] << 8) | arr_byteData[iOffset + 2];
+                if ((value & 0x00800000) != 0)
+                {
+                    value = (int)(0xff000000 | value);
+                }
+                return value;
+            }
+
+            public static uint ReadReverseUInt24(byte[] arr_byteData, int iOffset = 0)
+            {
+                return (uint)((arr_byteData[iOffset] << 16) | (arr_byteData[iOffset + 1] << 8) | arr_byteData[iOffset + 2]);
+            }
+
+            public static uint ReadReverseUInt32(byte[] arr_byteData, int iOffset = 0)
+            {
+                return (uint)((arr_byteData[iOffset] << 24) | (arr_byteData[iOffset + 1] << 16) | (arr_byteData[iOffset + 2] << 8) | arr_byteData[iOffset + 3]);
+            }
+
+        }
 
         public static bool IsV6Address(AddressFamily addressFamily)
         {

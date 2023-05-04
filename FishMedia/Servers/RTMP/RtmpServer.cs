@@ -286,10 +286,16 @@ namespace FishMedia.Servers.RTMP
 
             // TODO: Process Connnect Packet
             #region Process Connect Packet
-            if (arr_byteConnectionBytes[0] == 0x02)
+
+            File.WriteAllBytes("C:\\Users\\ASUS\\Desktop\\a.dat", arr_byteConnectionBytes.ToArray());
+
+            RTMPPacket pktRtmpPacket = new RTMPPacket(arr_byteConnectionBytes.ToArray());
+
+            switch (pktRtmpPacket)
             {
-                
+                default: break;
             }
+
             #endregion
 
             // TODO: Streaming
