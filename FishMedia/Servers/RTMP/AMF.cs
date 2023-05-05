@@ -1,16 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Text.Unicode;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using FishMedia.Utils;
-using static FishMedia.Servers.RTMP.AMF;
+﻿using System.Text;
 using static FishMedia.Utils.Utils;
 
 namespace FishMedia.Servers.RTMP
@@ -736,8 +724,6 @@ namespace FishMedia.Servers.RTMP
                 }
             }
 
-            return_T.amfobjObject = return_T.amfobjObject;
-
             if (ToBoolean(bError))
             {
                 return_T.iSize = -1;
@@ -1051,7 +1037,6 @@ namespace FishMedia.Servers.RTMP
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_MOVIECLIP reserved!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Null:
                 case AMFDataType.Undefined:
@@ -1062,7 +1047,6 @@ namespace FishMedia.Servers.RTMP
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_REFERENCE not supported!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Ecma_Array:
                     {
@@ -1081,7 +1065,6 @@ namespace FishMedia.Servers.RTMP
                 case AMFDataType.Object_End:
                     {
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Strict_Array:
                     {
@@ -1126,13 +1109,11 @@ namespace FishMedia.Servers.RTMP
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_RECORDSET reserved!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Typed_Object:
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_TYPED_OBJECT not supported!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Avmplus:
                     {
