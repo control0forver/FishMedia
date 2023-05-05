@@ -736,8 +736,6 @@ namespace FishMedia.Servers.RTMP
                 }
             }
 
-            return_T.amfobjObject = return_T.amfobjObject;
-
             if (ToBoolean(bError))
             {
                 return_T.iSize = -1;
@@ -1051,7 +1049,6 @@ namespace FishMedia.Servers.RTMP
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_MOVIECLIP reserved!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Null:
                 case AMFDataType.Undefined:
@@ -1062,7 +1059,6 @@ namespace FishMedia.Servers.RTMP
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_REFERENCE not supported!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Ecma_Array:
                     {
@@ -1081,7 +1077,6 @@ namespace FishMedia.Servers.RTMP
                 case AMFDataType.Object_End:
                     {
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Strict_Array:
                     {
@@ -1126,13 +1121,11 @@ namespace FishMedia.Servers.RTMP
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_RECORDSET reserved!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Typed_Object:
                     {
                         // RTMP_Log(RTMP_LOGERROR, "AMF_TYPED_OBJECT not supported!");
                         goto return_n1;
-                        break;
                     }
                 case AMFDataType.Avmplus:
                     {
