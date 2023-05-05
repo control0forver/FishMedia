@@ -193,7 +193,7 @@ namespace FishMedia.Servers.RTMP
                     output[index++] = (byte)(length & 0xFF);
                 }
 
-                for (int i = 0; i <= length; i++)
+                for (int i = 0; i < length; i++)
                 {
                     output[index++] = avString.arr_chValue[i];
                 }
@@ -627,15 +627,15 @@ namespace FishMedia.Servers.RTMP
         public static AVal AMF_DecodeString(byte[] arr_charData)
         {
             AVal avVal = new AVal { iLength = AMF_DecodeInt16(arr_charData) };
-            avVal.arr_chValue = (avVal.iLength > 0) ? arr_charData.Skip(2).ToArray() : c_avEmpty.arr_chValue;
-
+            avVal.arr_chValue = (avVal.iLength > 0) ? arr_charData.Skip(1+2).ToArray() : c_avEmpty.arr_chValue;
+            
             return avVal;
         }
         public static AVal AMF_DecodeLongString(byte[] arr_charData)
         {
             AVal avVal = new AVal();
             avVal.iLength = (int)AMF_DecodeInt32(arr_charData);
-            avVal.arr_chValue = (avVal.iLength > 0) ? arr_charData.Skip(4).ToArray() : c_avEmpty.arr_chValue;
+            avVal.arr_chValue = (avVal.iLength > 0) ? arr_charData.Skip(1+4).ToArray() : c_avEmpty.arr_chValue;
 
             return avVal;
         }
@@ -1418,7 +1418,6 @@ namespace FishMedia.Servers.RTMP
         }
         #endregion
 
-
         #region Prop
 
         #region Prop Set
@@ -1582,8 +1581,6 @@ namespace FishMedia.Servers.RTMP
 
         #endregion
 
-
-
         #region AMF3CD
         public static AMF3ClassDef AMF3CD_AddProp(AMF3ClassDef amf3cdClassDef, AVal amfobjpropObjProps)
         {
@@ -1611,7 +1608,7 @@ namespace FishMedia.Servers.RTMP
             Null = 0x05,                // 5 null
             Undefined = 0x06,           // 6 (Undefined)
             ReferencedObject = 0x07,    // 7 (Object Refernced)
-            EcmaArray = 0x08,          // 8 (Mixed Array)
+            EcmaArray = 0x08,           // 8 (Mixed Array)
             EndOfObject = 0x09,         // 9 
             Array = 0x0a,               // 10 (Strict Array)
             Date = 0x0b,                // 11
