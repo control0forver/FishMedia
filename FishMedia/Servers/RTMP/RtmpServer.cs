@@ -256,9 +256,10 @@ namespace FishMedia.Servers.RTMP
             }
             catch (Exception)
             {
-                return;
+                goto ConnectionEnd;
             }
             #endregion
+
 
             #region Connection
             List<byte> arr_byteConnectionBytes = new List<byte>();
@@ -284,26 +285,41 @@ namespace FishMedia.Servers.RTMP
 
             #endregion
 
-            // TODO: Process Connnect Packet
-            #region Process Connect Packet
-
             File.WriteAllBytes("C:\\Users\\ASUS\\Desktop\\a.dat", arr_byteConnectionBytes.ToArray());
 
-            RTMPPacket pktRtmpPacket = new RTMPPacket(arr_byteConnectionBytes.ToArray());
+            // TODO: Process Connnect Packet
+            #region Process Connect Packet
+            BinaryReader brConnectionBytes = new BinaryReader(new MemoryStream(arr_byteConnectionBytes.ToArray()));
 
-            switch (pktRtmpPacket.u_iHeaderType)
+            byte byteBasicHeaderBytesTaken = 0;
             {
-                default: break;
+                byte byteFirstByte = brConnectionBytes.ReadByte();
+
+                if (byteFirstByte >= 0 || byteFirstByte <= 1)
+                {
+                    byteBasicHeaderBytesTaken = (byte)1;
+                }
+                if (byteFirstByte >= 2 || byteFirstByte <= 3)
+                {
+                    byteBasicHeaderBytesTaken = (byte)2;
+                }
+                if (byteFirstByte >= 4 || byteFirstByte <= 7)
+                {
+                    byteBasicHeaderBytesTaken = (byte)3;
+                }
             }
 
-            #endregion
+            if (byteBasicHeaderBytesTaken==0)
+                goto ConnectionEnd;
 
-            // TODO: Streaming
+        #endregion
 
-            #endregion
+        // TODO: Streaming
+
+        #endregion
 
 
-ConnectionEnd:
+        ConnectionEnd:
             tcpcliClient.Close();
             return;
         }

@@ -134,17 +134,6 @@ namespace FishMedia
 
         static void TestCode()
         {
-            char[] str = "adwadadawASFESFEado109423834()\0".ToArray();
-            byte[] amfStrData = AMF.Byted.AMF_EncodeString(AMF.AVal.AVC(str));
-
-            AMF.AVal deVal = AMF.AMF_DecodeString(amfStrData);
-            byte[] amfDecoedStr = deVal.arr_chValue;
-
-            char[] decoder = Utils.Utils.ByteArrayToCharArray(amfDecoedStr);
-
-            Console.WriteLine(decoder);
-
-
         }
 
         static int Main(string[] args)

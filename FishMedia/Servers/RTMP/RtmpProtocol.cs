@@ -240,6 +240,8 @@ namespace FishMedia.Servers.RTMP
                 return GetBody(dBody);
             }
 
+            /*
+             
             public RTMPPacket(byte[] arr_byteBytes)
             {
                 p_chkChunk = new RTMPChunk[1];
@@ -299,6 +301,7 @@ namespace FishMedia.Servers.RTMP
                 }
                 p_chkChunk[0].p_dChunk = dBody;
             }
+             */
         }
 
         public static class SimpleHandShakePackets
