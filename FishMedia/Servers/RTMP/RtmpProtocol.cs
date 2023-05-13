@@ -11,6 +11,8 @@ using System.IO.Compression;
 using System.Net.NetworkInformation;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
+using System.Net.Sockets;
+using FishMedia.Utils;
 
 namespace FishMedia.Servers.RTMP
 {
@@ -81,7 +83,7 @@ namespace FishMedia.Servers.RTMP
             public static readonly AVal avVideoFunction = AVC("videoFunction");
         }
 
-        public enum RtmpFeatures
+        public enum RtmpFeature
         {
             HTTP = 0x01,
             ENC = 0x02,
@@ -95,15 +97,15 @@ namespace FishMedia.Servers.RTMP
         {
             Undefined = -1,
             RTMP = 0,
-            RTMPE = RtmpFeatures.ENC,
-            RTMPT = RtmpFeatures.HTTP,
-            RTMPS = RtmpFeatures.SSL,
-            RTMPTE = (RtmpFeatures.HTTP | RtmpFeatures.ENC),
-            RTMPTS = (RtmpFeatures.HTTP | RtmpFeatures.SSL),
-            RTMFP = RtmpFeatures.MFP
+            RTMPE = RtmpFeature.ENC,
+            RTMPT = RtmpFeature.HTTP,
+            RTMPS = RtmpFeature.SSL,
+            RTMPTE = (RtmpFeature.HTTP | RtmpFeature.ENC),
+            RTMPTS = (RtmpFeature.HTTP | RtmpFeature.SSL),
+            RTMFP = RtmpFeature.MFP
         }
 
-        public enum RtmpPacketTypes
+        public enum RtmpPacketType
         {
             /*  ... 0x00 */
             ChunkSize = 0x01,
@@ -130,179 +132,138 @@ namespace FishMedia.Servers.RTMP
             FlashVideo = 0x16
         }
 
-        public enum RtmpPacketSizes
+        public enum RtmpHeaderType
         {
             Large = 0,  // 11 bytes
             Medium,     // 7  bytes
             Small,      // 3  bytes
             Minimum     // 0  bytes
         }
+        public static short RtmpHeaderTypeLength(RtmpHeaderType headertypeHeaderType)
+        {
+            switch (headertypeHeaderType)
+            {
+                case RtmpHeaderType.Large:
+                    return 11;
+                case RtmpHeaderType.Medium:
+                    return 7;
+                case RtmpHeaderType.Small:
+                    return 3;
+                case RtmpHeaderType.Minimum:
+                    return 0;
+            }
+
+            return 3;
+        }
 
         #endregion
 
         public struct RTMPChunk
         {
-            public int iHeaderSize;
-            public int iChunkSize;
-            public byte[] p_dChunk;
+            public byte[] arr_dChunk;
             public byte[] arr_dHeader;
-
-            #region Public Member Methods
-            public string GetChunkString()
-            {
-                return GetChunkString(p_dChunk);
-            }
-            public char[] GetChunk()
-            {
-                return GetChunk(p_dChunk);
-            }
-            public string GetHeaderString()
-            {
-                return GetHeaderString(arr_dHeader);
-            }
-            public char[] GetHeader()
-            {
-                return GetHeader(arr_dHeader);
-            }
-            #endregion 
-
-            #region Static Methods
-            public static string GetChunkString(byte[] data)
-            {
-                return byteEncoder.GetString(data);
-            }
-            public static char[] GetChunk(byte[] data)
-            {
-                return GetChunkString(data).ToCharArray();
-            }
-            public static string GetHeaderString(byte[] data)
-            {
-                return byteEncoder.GetString(data);
-            }
-            public static char[] GetHeader(byte[] data)
-            {
-                return GetHeaderString(data).ToCharArray();
-            }
-            public static int GetChunkHeaderSize(byte byteByte)
-            {
-                int iSize = 0;
-                int fmt = (byteByte >> 6) & 0x03;
-                switch (fmt)
-                {
-                    case (int)RtmpPacketSizes.Large:
-                        iSize = 11;
-                        break;
-                    case (int)RtmpPacketSizes.Medium:
-                        iSize = 7;
-                        break;
-                    case (int)RtmpPacketSizes.Small:
-                        iSize = 3;
-                        break;
-                    case (int)RtmpPacketSizes.Minimum:
-                        iSize = 0;
-                        break;
-
-                    default: return iSize;
-                }
-                return iSize;
-            }
-            #endregion
         }
 
         public struct RTMPPacket
         {
             public byte u_iHeaderType;
-            public byte u_iPacketType;
-            public byte u_iHasAbsTimestamp;
-            public int iChannel;
             public uint u_iTimeStamp;
-            public int u_iInfoField2;
-            public uint u_iBodySize;
-            public uint u_iBytesRead;
+            public uint u_iMessageLength;
+            public byte u_iPacketType;
+            public int iChannelId;
+            public uint u_iMessageStreamId;
             public RTMPChunk[] p_chkChunk;
-            public byte[] dBody;
+            public byte u_iHasAbsTimestamp;
 
-
-            public static string GetBodyString(byte[] data)
+            public RTMPPacket()
             {
-                return byteEncoder.GetString(data);
-            }
-            public static char[] GetBody(byte[] data)
-            {
-                return GetBodyString(data).ToCharArray();
-            }
-            public string GetBodyString()
-            {
-                return GetBodyString(dBody);
-            }
-            public char[] GetBody()
-            {
-                return GetBody(dBody);
+                u_iHeaderType = (byte)0;
+                u_iTimeStamp = 0;
+                u_iMessageLength = 0;
+                u_iPacketType = (byte)0;
+                iChannelId = 0;
+                u_iMessageStreamId = 0;
+                this.p_chkChunk = new RTMPChunk[1] { new RTMPChunk() };
+                u_iHasAbsTimestamp = (byte)0;
             }
 
-            /*
-             
-            public RTMPPacket(byte[] arr_byteBytes)
+            public RTMPPacket(byte[] arr_byteRtmpPacketData)
             {
-                p_chkChunk = new RTMPChunk[1];
-                p_chkChunk[0] = new RTMPChunk();
-                dBody = null;
-
-                MemoryStream memStream = new MemoryStream(arr_byteBytes);
-                BinaryReader binReader = new BinaryReader(memStream);
-
-                // Read RTMPPacket Header
-                u_iHeaderType = binReader.ReadByte();
-                iChannel = (int)Utils.Utils.BinaryConverter.ReadReverseInt24(binReader.ReadBytes(3));
-                u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt24(binReader.ReadBytes(3));
-                u_iTimeStamp |= (uint)binReader.ReadByte() << 24;
-                u_iHasAbsTimestamp = (byte)(u_iTimeStamp >> 31);
-                u_iTimeStamp &= 0x7fffffff;
-                u_iPacketType = binReader.ReadByte();
-                u_iBodySize = Utils.Utils.BinaryConverter.ReadReverseUInt32(binReader.ReadBytes(4));
-                u_iBytesRead = 0;
-                u_iInfoField2 = binReader.ReadInt32();
-
-                // Read RTMPPacket Chunk
-                int iChunkSize = 0;
-                switch (iChannel)
+                BinaryReader brBytes = new BinaryReader(new MemoryStream(arr_byteRtmpPacketData));
                 {
-                    case 2:
-                        iChunkSize = 128;
-                        break;
-                    case 3:
-                        iChunkSize = 64;
-                        break;
-                    default:
-                        iChunkSize = 256;
-                        break;
-                }
-                p_chkChunk[0].iChunkSize = iChunkSize;
-                p_chkChunk[0].iHeaderSize = RTMPChunk.GetChunkHeaderSize(u_iHeaderType);
-                p_chkChunk[0].p_dChunk = new byte[u_iBodySize];
-                p_chkChunk[0].arr_dHeader = new byte[MiscInfos.iRtmpMaxHeaderSize];
-                binReader.Read(p_chkChunk[0].arr_dHeader, 0, p_chkChunk[0].iHeaderSize);
-
-                // Read RTMPPacket Body
-                dBody = new byte[u_iBodySize];
-                int iBytesToRead = (int)(u_iBodySize - u_iBytesRead);
-                if (iBytesToRead < iChunkSize)
-                {
-                    iChunkSize = iBytesToRead;
-                }
-
-                while (iBytesToRead > 0)
-                {
-                    int iBytesRead = binReader.Read(dBody, (int)u_iBytesRead, iBytesToRead);
-                    if (iBytesRead == 0)
-                        break;
-                    u_iBytesRead += (uint)iBytesRead;
-                    iBytesToRead -= iBytesRead;
-                }
-                p_chkChunk[0].p_dChunk = dBody;
+                    u_iHeaderType = brBytes.ReadByte();
+                    u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(RtmpHeaderTypeLength((RtmpHeaderType)u_iHeaderType)));
+                    u_iMessageLength = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(3));
+                    u_iPacketType = brBytes.ReadByte();
+                    iChannelId = brBytes.ReadByte();
+                    u_iMessageStreamId = Utils.Utils.BinaryConverter.ReadReverseUInt32(brBytes.ReadBytes(4));
+                    p_chkChunk = new RTMPChunk[1]{ new RTMPChunk() };
+                    u_iHasAbsTimestamp = 0;
+                };
             }
-             */
         }
+        /*
+
+        public RTMPPacket(byte[] arr_byteBytes)
+        {
+            p_chkChunk = new RTMPChunk[1];
+            p_chkChunk[0] = new RTMPChunk();
+            dBody = null;
+
+            MemoryStream memStream = new MemoryStream(arr_byteBytes);
+            BinaryReader binReader = new BinaryReader(memStream);
+
+            // Read RTMPPacket Header
+            u_iHeaderType = binReader.ReadByte();
+            iChannel = (int)Utils.Utils.BinaryConverter.ReadReverseInt24(binReader.ReadBytes(3));
+            u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt24(binReader.ReadBytes(3));
+            u_iTimeStamp |= (uint)binReader.ReadByte() << 24;
+            u_iHasAbsTimestamp = (byte)(u_iTimeStamp >> 31);
+            u_iTimeStamp &= 0x7fffffff;
+            u_iPacketType = binReader.ReadByte();
+            u_iBodySize = Utils.Utils.BinaryConverter.ReadReverseUInt32(binReader.ReadBytes(4));
+            u_iBytesRead = 0;
+            u_iInfoField2 = binReader.ReadInt32();
+
+            // Read RTMPPacket Chunk
+            int iChunkSize = 0;
+            switch (iChannel)
+            {
+                case 2:
+                    iChunkSize = 128;
+                    break;
+                case 3:
+                    iChunkSize = 64;
+                    break;
+                default:
+                    iChunkSize = 256;
+                    break;
+            }
+            p_chkChunk[0].iChunkSize = iChunkSize;
+            p_chkChunk[0].iHeaderSize = RTMPChunk.GetChunkHeaderSize(u_iHeaderType);
+            p_chkChunk[0].p_dChunk = new byte[u_iBodySize];
+            p_chkChunk[0].arr_dHeader = new byte[MiscInfos.iRtmpMaxHeaderSize];
+            binReader.Read(p_chkChunk[0].arr_dHeader, 0, p_chkChunk[0].iHeaderSize);
+
+            // Read RTMPPacket Body
+            dBody = new byte[u_iBodySize];
+            int iBytesToRead = (int)(u_iBodySize - u_iBytesRead);
+            if (iBytesToRead < iChunkSize)
+            {
+                iChunkSize = iBytesToRead;
+            }
+
+            while (iBytesToRead > 0)
+            {
+                int iBytesRead = binReader.Read(dBody, (int)u_iBytesRead, iBytesToRead);
+                if (iBytesRead == 0)
+                    break;
+                u_iBytesRead += (uint)iBytesRead;
+                iBytesToRead -= iBytesRead;
+            }
+            p_chkChunk[0].p_dChunk = dBody;
+        }
+         */
 
         public static class SimpleHandShakePackets
         {

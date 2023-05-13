@@ -285,38 +285,22 @@ namespace FishMedia.Servers.RTMP
 
             #endregion
 
+            // Debug: Save Bytes
             File.WriteAllBytes("C:\\Users\\ASUS\\Desktop\\a.dat", arr_byteConnectionBytes.ToArray());
 
             // TODO: Process Connnect Packet
             #region Process Connect Packet
-            BinaryReader brConnectionBytes = new BinaryReader(new MemoryStream(arr_byteConnectionBytes.ToArray()));
-
-            byte byteBasicHeaderBytesTaken = 0;
             {
-                byte byteFirstByte = brConnectionBytes.ReadByte();
-
-                if (byteFirstByte >= 0 || byteFirstByte <= 1)
-                {
-                    byteBasicHeaderBytesTaken = (byte)1;
-                }
-                if (byteFirstByte >= 2 || byteFirstByte <= 3)
-                {
-                    byteBasicHeaderBytesTaken = (byte)2;
-                }
-                if (byteFirstByte >= 4 || byteFirstByte <= 7)
-                {
-                    byteBasicHeaderBytesTaken = (byte)3;
-                }
+                RTMPPacket packet = new RTMPPacket(arr_byteConnectionBytes.ToArray());
+                ;
             }
+            #endregion
+            
 
-            if (byteBasicHeaderBytesTaken==0)
-                goto ConnectionEnd;
+            // TODO: Streaming
 
-        #endregion
 
-        // TODO: Streaming
-
-        #endregion
+            #endregion
 
 
         ConnectionEnd:
