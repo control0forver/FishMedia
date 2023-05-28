@@ -126,9 +126,13 @@ namespace FishMedia
             return config;
         }
 
-        unsafe public void LoadConfig(bool bResolveConfig = true)
+        unsafe public bool LoadConfig(bool bResolveConfig = true)
         {
+            if (!File.Exists(strConfigPath))
+                return false;
+
             LoadConfigFromFile(strConfigPath, bResolveConfig);
+            return true;
         }
 
         unsafe public void LoadConfigFromFile(string strConfigPath, bool bResolveConfig = true)
@@ -264,6 +268,9 @@ namespace FishMedia
             byte[] arr_byteBytes = new byte[iByteCount];
             encEncoder.GetBytes(strConfigData, arr_byteBytes, true);
 
+            string strDirectoryPath = Path.GetDirectoryName(strConfigPath);
+            if (strDirectoryPath.Trim() != string.Empty && !Directory.Exists(strDirectoryPath))
+                Directory.CreateDirectory(strDirectoryPath);
             File.WriteAllBytes(strConfigPath, arr_byteBytes);
         }
 
