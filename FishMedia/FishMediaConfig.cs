@@ -55,45 +55,45 @@ namespace FishMedia
 
     public class FishMediaConfig
     {
-        public const string c_strDefaultConfig =
-            "# Default Config\n" +
-            "[Config]\n" +
-            "  [Servers]\n" +
-            "    [Web]\n" +
-            "      Id = 'web1'\n" +
-            "      RootDir = www # Also for: RootDir = \"www\"\n" +
-            "      Index = index.htm # Also for: Index = \'index.htm\'\n" +
-            "\n" +
-            "      # Any > IpAddress\n" +
-            "      # IpV6 > IpV4\n" +
-            "      IpV6 = true\n" +
-            "      #IpAddr = 127.0.0.1\n" +
-            "      IpAddr = Any\n" +
-            "      Port = 8080\n" +
-            "      #IpAddr6 = ::1\n" +
-            "      IpAddr6 = Any\n" +
-            "      Port6 = 8080\n" +
-            "    END\n" +
-            "\n"+
-            "    [Web] # Web Server No.2\n" +
-            "      Id = 'web2'\n" +
-            "      RootDir = www\n" +
-            "      Index = index.htm\n" +
-            "\n" +
-            "      IpAddr = Any\n" +
-            "      Port = 8088\n" +
-            "    END\n" +
-            "\n" +
-            "    [Rtmp]\n" +
-            "    Id = 'rtmp1'\n" +
-            "\n" +
-            "      IpAddr = Any\n" +
-            "      Port = 1935\n" +
-            "    END\n" +
-            "  END\n" +
-            "END\n" +
+        public readonly static string c_strDefaultConfig =
+            "# Default Config" +Environment.NewLine+
+            "[Config]"+Environment.NewLine+
+            "  [Servers]"+Environment.NewLine+
+            "    [Web]"+Environment.NewLine+
+            "      Id = 'web1'"+Environment.NewLine+
+            "      RootDir = www # Also for: RootDir = \"www\""+Environment.NewLine+
+            "      Index = index.htm # Also for: Index = \'index.htm\'"+Environment.NewLine+
+            ""+Environment.NewLine+
+            "      # Any > IpAddress"+Environment.NewLine+
+            "      # IpV6 > IpV4"+Environment.NewLine+
+            "      IpV6 = true"+Environment.NewLine+
+            "      #IpAddr = 127.0.0.1"+Environment.NewLine+
+            "      IpAddr = Any"+Environment.NewLine+
+            "      Port = 8080"+Environment.NewLine+
+            "      #IpAddr6 = ::1"+Environment.NewLine+
+            "      IpAddr6 = Any"+Environment.NewLine+
+            "      Port6 = 8080"+Environment.NewLine+
+            "    END"+Environment.NewLine+
+            ""+Environment.NewLine+
+            "    [Web] # Web Server No.2"+Environment.NewLine+
+            "      Id = 'web2'"+Environment.NewLine+
+            "      RootDir = www"+Environment.NewLine+
+            "      Index = index.htm"+Environment.NewLine+
+            ""+Environment.NewLine+
+            "      IpAddr = Any"+Environment.NewLine+
+            "      Port = 8088"+Environment.NewLine+
+            "    END"+Environment.NewLine+
+            ""+Environment.NewLine+
+            "    [Rtmp]"+Environment.NewLine+
+            "    Id = 'rtmp1'"+Environment.NewLine+
+            ""+Environment.NewLine+
+            "      IpAddr = Any"+Environment.NewLine+
+            "      Port = 1935"+Environment.NewLine+
+            "    END"+Environment.NewLine+
+            "  END"+Environment.NewLine+
+            "END"+Environment.NewLine+
             "";
-        public const string c_strDefaultConfigPath = "config.conf";
+        public readonly static string c_strDefaultConfigPath = "config.conf";
         public static Encoder c_encDefaultEncoder = Encoding.ASCII.GetEncoder();
         public static Decoder c_decDefaultDecoder = Encoding.ASCII.GetDecoder();
 
@@ -126,9 +126,13 @@ namespace FishMedia
             return config;
         }
 
-        unsafe public void LoadConfig(bool bResolveConfig = true)
+        unsafe public bool LoadConfig(bool bResolveConfig = true)
         {
+            if (!File.Exists(strConfigPath))
+                return false;
+
             LoadConfigFromFile(strConfigPath, bResolveConfig);
+            return true;
         }
 
         unsafe public void LoadConfigFromFile(string strConfigPath, bool bResolveConfig = true)
@@ -264,6 +268,9 @@ namespace FishMedia
             byte[] arr_byteBytes = new byte[iByteCount];
             encEncoder.GetBytes(strConfigData, arr_byteBytes, true);
 
+            string strDirectoryPath = Path.GetDirectoryName(strConfigPath);
+            if (strDirectoryPath.Trim() != string.Empty && !Directory.Exists(strDirectoryPath))
+                Directory.CreateDirectory(strDirectoryPath);
             File.WriteAllBytes(strConfigPath, arr_byteBytes);
         }
 
