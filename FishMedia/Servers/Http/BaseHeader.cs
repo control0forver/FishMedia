@@ -20,7 +20,7 @@ namespace FishMedia.Servers.HTTP
 
         public string ContentLanguage { get; set; }
 
-        public Dictionary<string, string> Headers { get; set; }
+        public Dictionary<string, string>? Headers { get; set; }
 
         /// <summary>
         /// 不支持枚举类型约束，所以采取下列方案:)
