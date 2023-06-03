@@ -109,11 +109,11 @@ namespace FishMedia.Servers.RTMP
         {
             /*  ... 0x00 */
             ChunkSize = 0x01,
-            /*  ... 0x02 */
-            BytesReadReport = 0x03,
-            Control = 0x04,
-            ServerBW = 0x05,
-            ClientBW = 0x06,
+            Abort = 0x02,
+            MessageRead = 0x03,
+            UserControl = 0x04,
+            WindowSize = 0x05,
+            SetPeerBandwidth = 0x06,
             /*  ... 0x07 */
             Audio = 0x08,
             Video = 0x09,
@@ -122,34 +122,34 @@ namespace FishMedia.Servers.RTMP
             /*  ... 0x0C */
             /*  ... 0x0D */
             /*  ... 0x0E */
-            FlexStreamSend = 0x0F,
-            FlexSharedObject = 0x10,
-            FlexMessage = 0x11,
-            Info = 0x12,
-            SharedObject = 0x13,
-            Invoke = 0x14,
+            DataAMF3 = 0x0F,
+            SharedObjectAMF3 = 0x10,
+            CommandAMF3 = 0x11,
+            DataAMF0 = 0x12,
+            SharedObjectAMF0 = 0x13,
+            CommandAMF0 = 0x14,
             /*  ... 0x15 */
-            FlashVideo = 0x16
+            Aggregate = 0x16
         }
 
-        public enum RtmpHeaderType
+        public enum RtmpHeaderFormat
         {
             Large = 0,  // 11 bytes
             Medium,     // 7  bytes
             Small,      // 3  bytes
             Minimum     // 0  bytes
         }
-        public static short RtmpHeaderTypeLength(RtmpHeaderType headertypeHeaderType)
+        public static short RtmpHeaderTypeLength(RtmpHeaderFormat headertypeHeaderType)
         {
             switch (headertypeHeaderType)
             {
-                case RtmpHeaderType.Large:
+                case RtmpHeaderFormat.Large:
                     return 11;
-                case RtmpHeaderType.Medium:
+                case RtmpHeaderFormat.Medium:
                     return 7;
-                case RtmpHeaderType.Small:
+                case RtmpHeaderFormat.Small:
                     return 3;
-                case RtmpHeaderType.Minimum:
+                case RtmpHeaderFormat.Minimum:
                     return 0;
             }
 
@@ -158,47 +158,262 @@ namespace FishMedia.Servers.RTMP
 
         #endregion
 
+        public enum TimestampType
+        {
+            ABSOLUTE = 0,
+            RELATIVE = 1,
+            NONE = 3 // Packet Has No TimeStamp
+        };
+
+
+        public struct RTMPBasicHeader
+        {
+            public byte[] arr_byteBasicHeader;
+
+            public byte u_iFormat
+            { get { return (byte)((arr_byteBasicHeader[0] >> 6) & 0b11); } }
+            public uint u_iChunkStreamIdByte1
+            {
+                get
+                {
+                    return (uint)(arr_byteBasicHeader[0] & 0b00111111);
+                }
+            }
+            public uint u_iChunkStreamId
+            {
+                get
+                {
+                    uint _u_iChunkStreamIdByte1 = u_iChunkStreamIdByte1; 
+
+                    if (_u_iChunkStreamIdByte1 == 0)
+                    {
+                        return (uint)(64 + arr_byteBasicHeader[1]);
+                    }
+                    if (_u_iChunkStreamIdByte1 == 1)
+                    {
+                        return (uint)(64 + arr_byteBasicHeader[1] + arr_byteBasicHeader[2] * 256);
+                    }
+
+                    return _u_iChunkStreamIdByte1;
+                }
+            }
+            public TimestampType tsTimeStampSet
+            {
+                get
+                {
+                    uint _u_iChunkStreamId = u_iChunkStreamId;
+
+                    if (_u_iChunkStreamId == 2)
+                        return TimestampType.RELATIVE;
+
+                    if (_u_iChunkStreamId == 0 || _u_iChunkStreamId == 1 || _u_iChunkStreamId == 3)
+                        return (TimestampType)_u_iChunkStreamId;
+
+                    return TimestampType.ABSOLUTE;
+                }
+            }
+
+            #region Static Utils
+            public static uint BasicHeaderSize(byte byteByte1)
+            {
+                return (uint)(byteByte1 & 0b00111111);
+            }
+            #endregion
+
+            public RTMPBasicHeader(byte[] arr_byteBasicHeader)
+            {
+                this.arr_byteBasicHeader = arr_byteBasicHeader;
+            }
+        }
+
+        public struct RTMPChunkHeader
+        {
+            public RTMPBasicHeader _bschdrBasicHeader
+            {
+                get;set;
+            }
+            public RTMPBasicHeader bschdrBasicHeader
+            {
+                get
+                { return _bschdrBasicHeader; }
+                set
+                { _bschdrBasicHeader = value; DataReset(); }
+            }
+            public byte[] arr_byteChunkMessageHeader;
+            public uint u_iExtendedTimeStamp;
+
+            public RtmpHeaderFormat hdrFormat;
+            public RtmpPacketType pktmsgChunkStreamId;
+
+            private void DataReset()
+            {
+                hdrFormat = (RtmpHeaderFormat)bschdrBasicHeader.u_iFormat;
+                pktmsgChunkStreamId = (RtmpPacketType)bschdrBasicHeader.u_iChunkStreamId;
+
+                arr_byteChunkMessageHeader = new byte[(int)RtmpHeaderTypeLength(hdrFormat)];
+            }
+
+            public RTMPChunkHeader(byte[] byteData)
+            {
+                hdrFormat = 0;
+                pktmsgChunkStreamId = 0;
+                arr_byteChunkMessageHeader = null;
+                u_iExtendedTimeStamp = 0;
+                _bschdrBasicHeader = new RTMPBasicHeader(byteData);
+            }
+        }
+
         public struct RTMPChunk
         {
-            public byte[] arr_dChunk;
-            public byte[] arr_dHeader;
+            public RTMPChunkHeader hdrHeader;
+            public List<byte> arr_dChunkData;
+
+            public RTMPChunk() { hdrHeader = new RTMPChunkHeader(); arr_dChunkData = new List<byte>(); }
+
+            public RTMPChunk(RTMPChunkHeader hdrHeader, byte[] arr_byteData)
+            {
+                this.hdrHeader = hdrHeader;
+                arr_dChunkData = new List<byte>(arr_byteData);
+            }
         }
 
         public struct RTMPPacket
         {
-            public byte u_iHeaderType;
+            public bool bHasAbsTimestamp;
+            public uint u_iBodySize;
             public uint u_iTimeStamp;
-            public uint u_iMessageLength;
             public byte u_iPacketType;
-            public int iChannelId;
-            public uint u_iMessageStreamId;
-            public RTMPChunk[] p_chkChunk;
-            public byte u_iHasAbsTimestamp;
+            public uint u_iStreamId;
+            public RTMPChunk[] p_chkBody;
 
             public RTMPPacket()
             {
-                u_iHeaderType = (byte)0;
                 u_iTimeStamp = 0;
-                u_iMessageLength = 0;
+                u_iBodySize = 0;
                 u_iPacketType = (byte)0;
-                iChannelId = 0;
-                u_iMessageStreamId = 0;
-                this.p_chkChunk = new RTMPChunk[1] { new RTMPChunk() };
-                u_iHasAbsTimestamp = (byte)0;
+                u_iStreamId = 0;
+                this.p_chkBody = new RTMPChunk[1] { new RTMPChunk() };
+                bHasAbsTimestamp = false;
             }
 
-            public RTMPPacket(byte[] arr_byteRtmpPacketData)
+            public int Load(byte[] arr_byteRtmpPacketData)
             {
-                BinaryReader brBytes = new BinaryReader(new MemoryStream(arr_byteRtmpPacketData));
+                using (BinaryReader brBytes = new BinaryReader(new MemoryStream(arr_byteRtmpPacketData)))
                 {
-                    u_iHeaderType = brBytes.ReadByte();
-                    u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(RtmpHeaderTypeLength((RtmpHeaderType)u_iHeaderType)));
-                    u_iMessageLength = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(3));
-                    u_iPacketType = brBytes.ReadByte();
-                    iChannelId = brBytes.ReadByte();
-                    u_iMessageStreamId = Utils.Utils.BinaryConverter.ReadReverseUInt32(brBytes.ReadBytes(4));
-                    p_chkChunk = new RTMPChunk[1]{ new RTMPChunk() };
-                    u_iHasAbsTimestamp = 0;
+                    long iLastBRPos = brBytes.BaseStream.Position;
+
+                    RTMPBasicHeader bschdrBasicHeader;
+
+                    #region Header
+
+                    #region 1 byte
+
+                    #region BasicHeader
+                    {
+                        iLastBRPos = brBytes.BaseStream.Position; // Record Pos
+
+                        bschdrBasicHeader = new RTMPBasicHeader(new byte[1] { brBytes.ReadByte() });
+                        switch (bschdrBasicHeader.u_iChunkStreamIdByte1)
+                        {
+                            default:
+                                break;
+
+                            case 2:
+                                break;
+
+                            case 0:
+                                brBytes.BaseStream.Position = iLastBRPos; // Resume Pos
+                                bschdrBasicHeader = new RTMPBasicHeader(brBytes.ReadBytes(2));
+                                break;
+                            case 1:
+                                brBytes.BaseStream.Position = iLastBRPos; // Resume Pos
+                                bschdrBasicHeader = new RTMPBasicHeader(brBytes.ReadBytes(3));
+                                break;
+                        }
+
+                        p_chkBody[0].hdrHeader.bschdrBasicHeader = bschdrBasicHeader;
+                    }
+                    #endregion
+
+                    #region HasAbsTimeStamp
+                    {
+                        switch (bschdrBasicHeader.tsTimeStampSet)
+                        {
+                            default: break; // Set As Default: false
+
+                            case TimestampType.ABSOLUTE:
+                                bHasAbsTimestamp = true;
+                                break;
+
+                            case TimestampType.RELATIVE:
+                                bHasAbsTimestamp = false;
+                                break;
+
+                            case TimestampType.NONE:
+                                bHasAbsTimestamp = false;
+                                break;
+                        }
+                    }
+                    #endregion
+
+                    #endregion
+
+                    #region 3-4 bytes
+
+                    #region TimeStamp
+                    {
+                        iLastBRPos = brBytes.BaseStream.Position; // Record Pos
+                        u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(3)); // 3 Bytes
+                        if (u_iTimeStamp > 0xFFFFFF)
+                        {
+                            brBytes.BaseStream.Position = iLastBRPos; // Resume Pos
+                            u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt32(brBytes.ReadBytes(4)); // 4 Bytes if > 0xFFFFFF
+                        }
+                    }
+                    #endregion
+
+                    #endregion
+
+                    #region 3 bytes
+
+                    #region BodySize
+                    {
+                        u_iBodySize = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(3));
+                    }
+                    #endregion
+
+                    #endregion
+
+                    #region 1 byte
+
+                    #region PacketType
+                    {
+                        u_iPacketType = brBytes.ReadByte();
+                    }
+                    #endregion
+
+                    #endregion
+
+                    #region 4 bytes
+
+                    #region StreamId
+                    {
+                        u_iStreamId = Utils.Utils.BinaryConverter.ReadReverseUInt32(brBytes.ReadBytes(4));
+                    }
+                    #endregion
+
+                    #endregion
+
+                    #endregion
+
+                    #region Body
+                    {
+                        byte[] arr_byteBody = brBytes.ReadBytes((int)u_iBodySize);
+                        p_chkBody[0].arr_dChunkData.AddRange(arr_byteBody);
+                    }
+                    #endregion
+
+                    return (int)brBytes.BaseStream.Position;
                 };
             }
         }

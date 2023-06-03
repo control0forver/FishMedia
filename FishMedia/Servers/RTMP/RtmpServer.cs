@@ -79,6 +79,133 @@ namespace FishMedia.Servers.RTMP
             tcplstnerListener.Stop();
         }
 
+        public enum RtmpPacketHandlerReturn_t
+        {
+            Success = 0,
+            Failure = 1,
+            Failure_UnknownPacketType = 2,
+            Failure_
+        }
+        public RtmpPacketHandlerReturn_t RtmpPacketHandler(RTMPPacket pktRtmpPacket)
+        {
+            // TODO: Finish Rtmp Packet Handler
+
+            switch ((RtmpProtocol.RtmpPacketType)pktRtmpPacket.u_iPacketType)
+            {
+                default:
+                    return RtmpPacketHandlerReturn_t.Failure_UnknownPacketType;
+
+                case RtmpProtocol.RtmpPacketType.ChunkSize:
+                    {
+                        // Set Chunk Size Message
+
+                        // Ignore, ChunkData uses a 'List<byte>' dynamic-array as it's declaration type.
+
+                        break;
+                    }
+
+                case RtmpPacketType.Abort:
+                    {
+                        // Abort Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.MessageRead:
+                    {
+                        // Message Get Confirm Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.UserControl:
+                    {
+                        // User Control Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.WindowSize:
+                    {
+                        // Set Window Size Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.SetPeerBandwidth:
+                    {
+                        // Set Peer Bandwidth Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.Audio:
+                    {
+                        // Audio Data Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.Video:
+                    {
+                        // Video Data Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.DataAMF3:
+                    {
+                        // AMF3 Data Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.SharedObjectAMF3:
+                    {
+                        // AMF3 Shared Object Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.CommandAMF3:
+                    {
+                        // AMF3 Command Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.DataAMF0:
+                    {
+                        // AMF0 Data Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.SharedObjectAMF0:
+                    {
+                        // AMF0 Shared Object Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.CommandAMF0:
+                    {
+                        // AMF0 Command Message
+
+                        break;
+                    }
+
+                case RtmpPacketType.Aggregate:
+                    {
+                        // Total Message
+
+                        break;
+                    }
+            }
+
+            return RtmpPacketHandlerReturn_t.Success;
+        }
+
         private void ClientHandler(TcpClient tcpcliClient)
         {
             Socket sockClientSocket = tcpcliClient.Client;
@@ -261,46 +388,55 @@ namespace FishMedia.Servers.RTMP
             #endregion
 
 
-            #region Connection
+            #region Rtmp Protocol
             List<byte> arr_byteConnectionBytes = new List<byte>();
 
-            #region Get Connect Packet
-            try
+            while (true)
             {
-                while (true)
+
+                #region Get Packets
+                try
                 {
-                    byte[] bt = new byte[RtmpProtocol.iMaxNetRecvBufferSize];
-                    tcpcliClient.GetStream().Read(bt);
-                    bt = Utils.Utils.TrimByteArrayEnd(bt);
-                    arr_byteConnectionBytes.AddRange(bt);
+                    while (true)
+                    {
+                        byte[] bt = new byte[RtmpProtocol.iMaxNetRecvBufferSize];
+                        tcpcliClient.GetStream().Read(bt);
+                        bt = Utils.Utils.TrimByteArrayEnd(bt);
+                        arr_byteConnectionBytes.AddRange(bt);
 
-                    if (bt.Length < iMaxNetRecvBufferSize)
-                        break;
+                        if (bt.Length < iMaxNetRecvBufferSize)
+                            break;
+                    }
                 }
+                catch (Exception)
+                {
+                    goto ConnectionEnd;
+                }
+
+                #endregion
+
+                #region Process Packets
+                {
+                    while (true)
+                    {
+                        RTMPPacket pktRtmpPacket = new RTMPPacket();
+                        int iBytesRead = pktRtmpPacket.Load(arr_byteConnectionBytes.ToArray());
+
+                        // TODO: Process Packet
+                        RtmpPacketHandlerReturn_t pkthdrRet_tRtmpPacketHandleResult = RtmpPacketHandler(pktRtmpPacket);
+                        if (pkthdrRet_tRtmpPacketHandleResult != RtmpPacketHandlerReturn_t.Success)
+                        {
+                            goto ConnectionEnd;
+                        }
+
+                        arr_byteConnectionBytes.RemoveRange(0, iBytesRead); // Skip Processed Packet Bytes
+                    }
+                }
+                #endregion
+
             }
-            catch (Exception)
-            {
-                goto ConnectionEnd;
-            }
 
-            #endregion
-
-            // Debug: Save Bytes
-            File.WriteAllBytes("C:\\Users\\ASUS\\Desktop\\a.dat", arr_byteConnectionBytes.ToArray());
-
-            // TODO: Process Connnect Packet
-            #region Process Connect Packet
-            {
-                RTMPPacket packet = new RTMPPacket(arr_byteConnectionBytes.ToArray());
-                ;
-            }
-            #endregion
-            
-            
-            // TODO: Streaming
-
-
-            #endregion
+        #endregion
 
 
         ConnectionEnd:
