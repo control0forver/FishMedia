@@ -140,9 +140,26 @@ namespace FishMedia.Servers.HTTP
             {
                 while (IsRunning)
                 {
-                    TcpClient client = serverListener.AcceptTcpClient();
-                    Thread requestThread = new Thread(() => { ProcessRequest(client); });
-                    requestThread.Start();
+                    try
+                    {
+                        TcpClient client = serverListener.AcceptTcpClient();
+                        Thread requestThread = new Thread(() =>
+                        {
+                            try
+                            {
+                                ProcessRequest(client);
+                            }
+                            catch (Exception e)
+                            {
+                                Log(e.Message);
+                            }
+                        });
+                        requestThread.Start();
+                    }
+                    catch (Exception e)
+                    {
+                        Log(e.Message);
+                    }
                 }
             }
             catch (Exception e)
@@ -173,9 +190,26 @@ namespace FishMedia.Servers.HTTP
             {
                 while (IsRunning)
                 {
-                    TcpClient client = serverListener.AcceptTcpClient();
-                    Thread requestThread = new Thread(() => { ProcessRequest(client); });
-                    requestThread.Start();
+                    try
+                    {
+                        TcpClient client = serverListener.AcceptTcpClient();
+                        Thread requestThread = new Thread(() =>
+                        {
+                            try
+                            {
+                                ProcessRequest(client);
+                            }
+                            catch (Exception e)
+                            {
+                                Log(e.Message);
+                            }
+                        });
+                        requestThread.Start();
+                    }
+                    catch (Exception e)
+                    {
+                        Log(e.Message);
+                    }
                 }
             }
             catch (Exception e)
