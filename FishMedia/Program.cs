@@ -458,6 +458,13 @@ namespace FishMedia
                         }
                     }
 
+                    if (strCmdExec == "clrscr")
+                    {
+                        bCommandFound = true;
+
+                        Console.Clear();
+                    }
+
                     if (strCmdExec == "exit")
                     {
                         bCommandFound = true;
