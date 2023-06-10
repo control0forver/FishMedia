@@ -11,7 +11,7 @@ namespace FishMedia.Utils
 {
     public static class Utils
     {
-        public static class BinaryConverter
+        public static class ByteConverter
         {
             /*public static int ReadReverseInt24(BinaryReader reader)
             {
@@ -159,13 +159,30 @@ namespace FishMedia.Utils
             return arr_SrcArray.Skip(iStartIndex).Take(iIndexCount).ToArray();
         }
 
-        public static T[] CopyArrInRange<T>(T[] arr_SrcArray, T[] arr_CopyArray, int iIndexCount = 1, int iSrcStartIndex = 0, int iCopyStartIndex = 0)
+        public static void CopyArr<T>(T[] arr_SrcArray, T[] arr_DestArray, int iIndexCount, int iSrcStartIndex = 0, int iDestStartIndex = 0)
         {
-            T[] arr_ResultArray = (T[])arr_SrcArray.Clone();
+            for (int i = 0; i < iIndexCount; i++)
+            {
+                arr_DestArray[iSrcStartIndex + i] = arr_SrcArray[iDestStartIndex + i];
+            }
+        }
+
+        public static T[] CopyArrOut<T>(T[] arr_SrcArray, int iIndexCount = -1, int iSrcStartIndex = 0, int iOutArraySize = -1)
+        {
+            T[] arr_ResultArray;
+
+            if (iOutArraySize == -1)
+                arr_ResultArray = new T[arr_SrcArray.Length];
+            else
+                arr_ResultArray = new T[iOutArraySize];
+
+            if (iIndexCount == -1)
+                iIndexCount = arr_ResultArray.Length;
+
 
             for (int i = 0; i < iIndexCount; i++)
             {
-                arr_ResultArray[iSrcStartIndex + i] = arr_CopyArray[iCopyStartIndex + i];
+                arr_ResultArray[i] = arr_SrcArray[iSrcStartIndex + i];
             }
 
             return arr_ResultArray;

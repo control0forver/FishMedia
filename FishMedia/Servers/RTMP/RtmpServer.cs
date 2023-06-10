@@ -86,11 +86,11 @@ namespace FishMedia.Servers.RTMP
             Failure_UnknownPacketType = 2,
             Failure_
         }
-        public RtmpPacketHandlerReturn_t RtmpPacketHandler(RTMPPacket pktRtmpPacket)
+        public RtmpPacketHandlerReturn_t RtmpPacketHandler(RTMPPacket[] p_pktRtmpPacket, TcpClient tcpcliClient)
         {
             // TODO: Finish Rtmp Packet Handler
 
-            switch ((RtmpProtocol.RtmpPacketType)pktRtmpPacket.u_iPacketType)
+            switch ((RtmpProtocol.RtmpPacketType)p_pktRtmpPacket[0].u_iPacketType)
             {
                 default:
                     return RtmpPacketHandlerReturn_t.Failure_UnknownPacketType;
@@ -99,7 +99,7 @@ namespace FishMedia.Servers.RTMP
                     {
                         // Set Chunk Size Message
 
-                        // Ignore, ChunkData uses a 'List<byte>' dynamic-array as it's declaration type.
+                        p_pktRtmpPacket[0].p_chkBody[0].ChunkResize(Utils.Utils.ByteConverter.ReadReverseUInt32(p_pktRtmpPacket[0].p_chkBody[0].arr_dChunkData));
 
                         break;
                     }
@@ -191,6 +191,129 @@ namespace FishMedia.Servers.RTMP
                 case RtmpPacketType.CommandAMF0:
                     {
                         // AMF0 Command Message
+
+                        using (BinaryReader brReader = new BinaryReader(new MemoryStream(p_pktRtmpPacket[0].p_chkBody[0].arr_dChunkData)))
+                        {
+                            while (brReader.BaseStream.Position < brReader.BaseStream.Length)
+                            {
+                                brReader.BaseStream.Position = 0;
+
+                                AMF.AMFDataType amfdtDataType = (AMF.AMFDataType)brReader.ReadByte();
+
+                                switch (amfdtDataType)
+                                {
+                                    default:
+                                        break;
+
+                                        // TODO: Finish All AMF0 Types
+                                    case AMF.AMFDataType.Number:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Boolean:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.String:
+                                        {
+                                            int iStringLength = AMF.AMF_DecodeInt16(brReader.ReadBytes(4));
+                                            AMF.AVal avString = AMF.AMF_DecodeString(brReader.ReadBytes(iStringLength));
+
+                                            {
+                                                if (AMF.AVal.AVMATCH(avString, MiscInfos.avConnect))
+                                                {
+
+                                                }
+                                            }
+
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Object:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.MovieClip:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Null:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Undefined:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Reference:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Ecma_Array:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Object_End:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Strict_Array:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Date:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Long_String:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Unsupported:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Recordset:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Xml_Doc:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Typed_Object:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Avmplus:
+                                        {
+                                            break;
+                                        }
+
+                                    case AMF.AMFDataType.Invalid:
+                                        {
+                                            break;
+                                        }
+                                }
+                            }
+                        }
+
 
                         break;
                     }
@@ -383,17 +506,16 @@ namespace FishMedia.Servers.RTMP
             }
             catch (Exception)
             {
-                goto ConnectionEnd;
+               goto ConnectionEnd;
             }
             #endregion
 
 
             #region Rtmp Protocol
-            List<byte> arr_byteConnectionBytes = new List<byte>();
+            List<byte> arr_byteRtmpBytes = new List<byte>();
 
             while (true)
             {
-
                 #region Get Packets
                 try
                 {
@@ -402,7 +524,7 @@ namespace FishMedia.Servers.RTMP
                         byte[] bt = new byte[RtmpProtocol.iMaxNetRecvBufferSize];
                         tcpcliClient.GetStream().Read(bt);
                         bt = Utils.Utils.TrimByteArrayEnd(bt);
-                        arr_byteConnectionBytes.AddRange(bt);
+                        arr_byteRtmpBytes.AddRange(bt);
 
                         if (bt.Length < iMaxNetRecvBufferSize)
                             break;
@@ -412,24 +534,25 @@ namespace FishMedia.Servers.RTMP
                 {
                     goto ConnectionEnd;
                 }
-
                 #endregion
 
                 #region Process Packets
                 {
+                    RTMPPacket[] p_pktRtmpPacket = new RTMPPacket[1] { new RTMPPacket() };
+                    p_pktRtmpPacket[0].p_chkBody[0].ChunkResize(512);
                     while (true)
                     {
-                        RTMPPacket pktRtmpPacket = new RTMPPacket();
-                        int iBytesRead = pktRtmpPacket.Load(arr_byteConnectionBytes.ToArray());
+                        p_pktRtmpPacket[0].Reset();
+                        int iBytesRead = p_pktRtmpPacket[0].Load(arr_byteRtmpBytes.ToArray());
 
                         // TODO: Process Packet
-                        RtmpPacketHandlerReturn_t pkthdrRet_tRtmpPacketHandleResult = RtmpPacketHandler(pktRtmpPacket);
+                        RtmpPacketHandlerReturn_t pkthdrRet_tRtmpPacketHandleResult = RtmpPacketHandler(p_pktRtmpPacket, tcpcliClient);
                         if (pkthdrRet_tRtmpPacketHandleResult != RtmpPacketHandlerReturn_t.Success)
                         {
                             goto ConnectionEnd;
                         }
 
-                        arr_byteConnectionBytes.RemoveRange(0, iBytesRead); // Skip Processed Packet Bytes
+                        arr_byteRtmpBytes.RemoveRange(0, iBytesRead); // Skip Processed Packet Bytes
                     }
                 }
                 #endregion

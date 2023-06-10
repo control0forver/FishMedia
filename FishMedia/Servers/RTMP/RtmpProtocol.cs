@@ -183,7 +183,7 @@ namespace FishMedia.Servers.RTMP
             {
                 get
                 {
-                    uint _u_iChunkStreamIdByte1 = u_iChunkStreamIdByte1; 
+                    uint _u_iChunkStreamIdByte1 = u_iChunkStreamIdByte1;
 
                     if (_u_iChunkStreamIdByte1 == 0)
                     {
@@ -222,16 +222,18 @@ namespace FishMedia.Servers.RTMP
 
             public RTMPBasicHeader(byte[] arr_byteBasicHeader)
             {
-                this.arr_byteBasicHeader = arr_byteBasicHeader;
+                this.arr_byteBasicHeader = Utils.Utils.CopyArrOut(arr_byteBasicHeader);
+            }
+
+            public void Reset()
+            {
+                arr_byteBasicHeader = null;
             }
         }
 
         public struct RTMPChunkHeader
         {
-            public RTMPBasicHeader _bschdrBasicHeader
-            {
-                get;set;
-            }
+            public RTMPBasicHeader _bschdrBasicHeader;
             public RTMPBasicHeader bschdrBasicHeader
             {
                 get
@@ -261,8 +263,18 @@ namespace FishMedia.Servers.RTMP
                 u_iExtendedTimeStamp = 0;
                 _bschdrBasicHeader = new RTMPBasicHeader(byteData);
             }
+
+            public void Reset()
+            {
+                hdrFormat = 0;
+                pktmsgChunkStreamId = 0;
+                u_iExtendedTimeStamp = 0;
+                arr_byteChunkMessageHeader = null;
+                _bschdrBasicHeader.Reset();
+            }
         }
 
+        /*
         public struct RTMPChunk
         {
             public RTMPChunkHeader hdrHeader;
@@ -274,6 +286,50 @@ namespace FishMedia.Servers.RTMP
             {
                 this.hdrHeader = hdrHeader;
                 arr_dChunkData = new List<byte>(arr_byteData);
+            }
+
+            public void Reset()
+            {
+                hdrHeader.Reset();
+                arr_dChunkData.Clear();
+            }
+        }*/
+
+        public struct RTMPChunk
+        {
+            public RTMPChunkHeader hdrHeader;
+            public byte[] arr_dChunkData;
+
+            public RTMPChunk(int iChunkSize = 512) { hdrHeader = new RTMPChunkHeader(); arr_dChunkData = new byte[iChunkSize]; }
+
+            public RTMPChunk(RTMPChunkHeader hdrHeader, int iChunkSize = 512)
+            {
+                this.hdrHeader = hdrHeader;
+                arr_dChunkData = new byte[iChunkSize];
+            }
+
+            // Returns overflowed bytes count
+            public int SetChunkData(byte[] arr_byteData)
+            {
+                Utils.Utils.CopyArr(arr_byteData, arr_dChunkData, arr_dChunkData.Length);
+                return arr_byteData.Length - arr_dChunkData.Length;
+            }
+
+            public void ChunkResize(uint iChunkSize, bool bTryKeepData = false)
+            {
+                if (bTryKeepData)
+                {
+                    Array.Resize(ref arr_dChunkData, (int)iChunkSize);
+                    return;
+                }
+
+                arr_dChunkData = new byte[iChunkSize];
+            }
+
+            public void Reset()
+            {
+                hdrHeader.Reset();
+                Array.Clear(arr_dChunkData, 0, arr_dChunkData.Length);
             }
         }
 
@@ -294,6 +350,16 @@ namespace FishMedia.Servers.RTMP
                 u_iStreamId = 0;
                 this.p_chkBody = new RTMPChunk[1] { new RTMPChunk() };
                 bHasAbsTimestamp = false;
+            }
+
+            public void Reset()
+            {
+                u_iTimeStamp = 0;
+                u_iBodySize = 0;
+                u_iPacketType = (byte)0;
+                u_iStreamId = 0;
+                bHasAbsTimestamp = false;
+                p_chkBody[0].Reset();
             }
 
             public int Load(byte[] arr_byteRtmpPacketData)
@@ -363,11 +429,11 @@ namespace FishMedia.Servers.RTMP
                     #region TimeStamp
                     {
                         iLastBRPos = brBytes.BaseStream.Position; // Record Pos
-                        u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(3)); // 3 Bytes
+                        u_iTimeStamp = Utils.Utils.ByteConverter.ReadReverseUInt24(brBytes.ReadBytes(3)); // 3 Bytes
                         if (u_iTimeStamp > 0xFFFFFF)
                         {
                             brBytes.BaseStream.Position = iLastBRPos; // Resume Pos
-                            u_iTimeStamp = Utils.Utils.BinaryConverter.ReadReverseUInt32(brBytes.ReadBytes(4)); // 4 Bytes if > 0xFFFFFF
+                            u_iTimeStamp = Utils.Utils.ByteConverter.ReadReverseUInt32(brBytes.ReadBytes(4)); // 4 Bytes if > 0xFFFFFF
                         }
                     }
                     #endregion
@@ -378,7 +444,7 @@ namespace FishMedia.Servers.RTMP
 
                     #region BodySize
                     {
-                        u_iBodySize = Utils.Utils.BinaryConverter.ReadReverseUInt24(brBytes.ReadBytes(3));
+                        u_iBodySize = Utils.Utils.ByteConverter.ReadReverseUInt24(brBytes.ReadBytes(3));
                     }
                     #endregion
 
@@ -398,7 +464,7 @@ namespace FishMedia.Servers.RTMP
 
                     #region StreamId
                     {
-                        u_iStreamId = Utils.Utils.BinaryConverter.ReadReverseUInt32(brBytes.ReadBytes(4));
+                        u_iStreamId = Utils.Utils.ByteConverter.ReadReverseUInt32(brBytes.ReadBytes(4));
                     }
                     #endregion
 
@@ -409,7 +475,7 @@ namespace FishMedia.Servers.RTMP
                     #region Body
                     {
                         byte[] arr_byteBody = brBytes.ReadBytes((int)u_iBodySize);
-                        p_chkBody[0].arr_dChunkData.AddRange(arr_byteBody);
+                        Utils.Utils.CopyArr(arr_byteBody, p_chkBody[0].arr_dChunkData, arr_byteBody.Length);
                     }
                     #endregion
 
@@ -495,11 +561,11 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data,iSize);
                     }
                     public void SetVersion(byte[] arr_byteVersion)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteVersion, iSize1_Version);
+                        Utils.Utils.CopyArr(arr_byteVersion, data, iSize1_Version);
                     }
 
                     public byte[] GetVersion()
@@ -522,11 +588,11 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetVersion(byte[] arr_byteVersion)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteVersion, iSize1_Version);
+                        Utils.Utils.CopyArr(arr_byteVersion, data, iSize1_Version);
                     }
 
                     public byte[] GetVersion()
@@ -551,19 +617,19 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetTime(byte[] arr_byteTime)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteTime, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteTime, data, iSize1_Time);
                     }
                     public void SetZero(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize2_Zero, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize2_Zero, iSize1_Time);
                     }
                     public void SetRandom(byte[] arr_byteRandom)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteRandom, iSize3_Random, iSize1_Time + iSize2_Zero);
+                        Utils.Utils.CopyArr(arr_byteRandom, data, iSize3_Random, iSize1_Time + iSize2_Zero);
                     }
 
                     public byte[] GetTime()
@@ -596,19 +662,19 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetTime(byte[] arr_byteTime)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteTime, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteTime, data, iSize1_Time);
                     }
                     public void SetZero(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize2_Zero, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize2_Zero, iSize1_Time);
                     }
                     public void SetRandom(byte[] arr_byteRandom)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteRandom, iSize3_Random, iSize1_Time + iSize2_Zero);
+                        Utils.Utils.CopyArr(arr_byteRandom, data, iSize3_Random, iSize1_Time + iSize2_Zero);
                     }
 
                     public byte[] GetTime()
@@ -641,19 +707,19 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetTime(byte[] arr_byteTime)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteTime, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteTime, data, iSize1_Time);
                     }
                     public void SetTime2(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize2_Time2, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteArray,data, iSize2_Time2,iSize1_Time);
                     }
                     public void SetRandomEcho(byte[] arr_byteRandom)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteRandom, iSize3_RandomEcho, iSize1_Time + iSize2_Time2);
+                        Utils.Utils.CopyArr(arr_byteRandom, data, iSize3_RandomEcho, iSize1_Time + iSize2_Time2);
                     }
 
                     public byte[] GetTime()
@@ -686,19 +752,19 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetTime(byte[] arr_byteTime)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteTime, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteTime, data, iSize1_Time);
                     }
                     public void SetTime2(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize2_Time2, iSize1_Time);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize2_Time2, iSize1_Time);
                     }
                     public void SetRandomEcho(byte[] arr_byteRandom)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteRandom, iSize3_RandomEcho, iSize1_Time + iSize2_Time2);
+                        Utils.Utils.CopyArr(arr_byteRandom, data, iSize3_RandomEcho, iSize1_Time + iSize2_Time2);
                     }
 
                     public byte[] GetTime()
@@ -734,11 +800,11 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetVersion(byte[] arr_byteVersion)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteVersion, iSize1_Version);
+                        Utils.Utils.CopyArr(arr_byteVersion, data, iSize1_Version);
                     }
                 }
             }
@@ -756,11 +822,11 @@ namespace FishMedia.Servers.RTMP
 
                     public void Set(byte[] arr_byteArray)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteArray, iSize);
+                        Utils.Utils.CopyArr(arr_byteArray, data, iSize);
                     }
                     public void SetVersion(byte[] arr_byteVersion)
                     {
-                        data = Utils.Utils.CopyArrInRange<byte>(data, arr_byteVersion, iSize1_Version);
+                        Utils.Utils.CopyArr(arr_byteVersion, data, iSize1_Version);
                     }
                 }
             }
