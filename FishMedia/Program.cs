@@ -430,6 +430,7 @@ namespace FishMedia
                         Console.WriteLine(" help - Show all commands");
                         Console.WriteLine(" show - Show current config");
                         Console.WriteLine(" list - List servers");
+                        Console.WriteLine(" clrscr - Clear console display");
                         Console.WriteLine(" exit - Exit all servers");
                     }
 
@@ -456,6 +457,13 @@ namespace FishMedia
                         {
                             Console.WriteLine($"  Id: {item.Key}");
                         }
+                    }
+
+                    if (strCmdExec == "clrscr")
+                    {
+                        bCommandFound = true;
+
+                        Console.Clear();
                     }
 
                     if (strCmdExec == "exit")
