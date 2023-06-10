@@ -136,35 +136,45 @@ namespace FishMedia.Servers.HTTP
             else
                 this.Log(string.Format("Sever is running at {0}://[{1}]:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
 
-            try
+            while (IsRunning)
             {
-                while (IsRunning)
+                try
                 {
-                    try
+                    TcpClient client = serverListener.AcceptTcpClient();
+                    Thread requestThread = new Thread(() =>
                     {
-                        TcpClient client = serverListener.AcceptTcpClient();
-                        Thread requestThread = new Thread(() =>
+                        try
                         {
-                            try
-                            {
-                                ProcessRequest(client);
-                            }
-                            catch (Exception e)
-                            {
-                                Log(e.Message);
-                            }
-                        });
-                        requestThread.Start();
-                    }
-                    catch (Exception e)
-                    {
-                        Log(e.Message);
-                    }
+                            ProcessRequest(client);
+                        }
+                        catch (NullReferenceException) { }
+                        catch (IOException) { }
+#if DEBUG
+                        catch (Exception e)
+                        {
+                            Log(e.Message);
+#else
+                        catch (Exception)
+                        {
+#endif
+                            client.Close();
+                            return;
+                        }
+                    });
+                    requestThread.Start();
                 }
-            }
-            catch (Exception e)
-            {
-                Log(e.Message);
+                catch (NullReferenceException) { }
+                catch (IOException) { }
+#if DEBUG
+                catch (Exception e)
+                {
+                    Log(e.Message);
+#else
+                catch (Exception)
+                {
+#endif
+                    continue;
+                }
             }
         }
 
@@ -186,35 +196,45 @@ namespace FishMedia.Servers.HTTP
             else
                 this.Log(string.Format("Sever is running at {0}://[{1}]:{2}", Protocol.ToString().ToLower(), ServerIP, ServerPort));
 
-            try
+            while (IsRunning)
             {
-                while (IsRunning)
+                try
                 {
-                    try
+                    TcpClient client = serverListener.AcceptTcpClient();
+                    Thread requestThread = new Thread(() =>
                     {
-                        TcpClient client = serverListener.AcceptTcpClient();
-                        Thread requestThread = new Thread(() =>
+                        try
                         {
-                            try
-                            {
-                                ProcessRequest(client);
-                            }
-                            catch (Exception e)
-                            {
-                                Log(e.Message);
-                            }
-                        });
-                        requestThread.Start();
-                    }
-                    catch (Exception e)
-                    {
-                        Log(e.Message);
-                    }
+                            ProcessRequest(client);
+                        }
+                        catch(NullReferenceException) { }
+                        catch(IOException) { }
+#if DEBUG
+                        catch (Exception e)
+                        {
+                            Log(e.Message);
+#else
+                        catch (Exception)
+                        {
+#endif
+                            client.Close();
+                            return;
+                        }
+                    });
+                    requestThread.Start();
                 }
-            }
-            catch (Exception e)
-            {
-                Log(e.Message);
+                catch (NullReferenceException) { }
+                catch (IOException) { }
+#if DEBUG
+                catch (Exception e)
+                {
+                    Log(e.Message);
+#else
+                catch (Exception)
+                {
+#endif
+                    continue;
+                }
             }
         }
 
