@@ -472,8 +472,6 @@ namespace FishMedia
 #if DEBUG
                     if (strCmdExec == "_fgc")
                     {
-<<<<<<<<< Temporary merge branch 1
-=========
                         bCommandFound = true;
 
                         GC.Collect();
