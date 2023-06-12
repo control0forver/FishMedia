@@ -472,6 +472,14 @@ namespace FishMedia
 #if DEBUG
                     if (strCmdExec == "_fgc")
                     {
+                        GC.Collect();
+                        Console.WriteLine("Force Collecting..");
+                    }
+#endif
+
+#if DEBUG
+                    if (strCmdExec == "_fgc")
+                    {
                         bCommandFound = true;
 
                         GC.Collect();
