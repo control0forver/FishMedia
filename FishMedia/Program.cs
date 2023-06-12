@@ -427,10 +427,13 @@ namespace FishMedia
                         bCommandFound = true;
 
                         Console.WriteLine("Commands:");
-                        Console.WriteLine(" help - Show all commands");
-                        Console.WriteLine(" show - Show current config");
-                        Console.WriteLine(" list - List servers");
+                        Console.WriteLine(" help   - Show all commands");
+                        Console.WriteLine(" show   - Show current config");
+                        Console.WriteLine(" list   - List servers");
                         Console.WriteLine(" clrscr - Clear console display");
+#if DEBUG
+                        Console.WriteLine(" _fgc   - Force GC(Debug Only)");
+#endif
                         Console.WriteLine(" exit - Exit all servers");
                     }
 
@@ -465,6 +468,16 @@ namespace FishMedia
 
                         Console.Clear();
                     }
+
+#if DEBUG
+                    if (strCmdExec == "_fgc")
+                    {
+                        bCommandFound = true;
+
+                        GC.Collect();
+                        Console.WriteLine("Force Collecting..");
+                    }
+#endif
 
                     if (strCmdExec == "exit")
                     {
